@@ -47,12 +47,14 @@ export const LotterySection = () => {
     }
 
     try {
-      for (let i = 0; i < ticketCount; i++) {
-        await buyTicket({
-          functionName: "buyTicket",
-          value: parseEther(TICKET_PRICE),
-        });
-      }
+      // for (let i = 0; i < ticketCount; i++) {
+      const singlePrice = parseEther("0.01"); // 或从合约读取
+      const totalPrice = singlePrice * BigInt(ticketCount);
+      await buyTicket({
+        functionName: "buyTicket",
+        value: totalPrice,
+      });
+      // }
       notification.success(`成功购买 ${ticketCount} 张彩票!`);
       setTicketCount(1);
     } catch (error) {
