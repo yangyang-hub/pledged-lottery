@@ -192,42 +192,51 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
     /// @param buyer 实际购买者地址
     /// @dev 允许PledgedLottery合约代表用户购买彩票
     function buyTicketFor(address buyer) external payable onlyActiveRound nonReentrant {
-        require(msg.value == TICKET_PRICE, unicode"彩票价格不正确");
+        //可批量购买
+        require(msg.value > 0, unicode"请至少支付0.01 ETH");
+        require(msg.value % TICKET_PRICE == 0, unicode"彩票价格必须是0.01 ETH的整数倍");
+        uint256 ticketCount = msg.value / TICKET_PRICE;
+        require(ticketCount > 0, unicode"至少购买一张彩票");
+
         require(buyer != address(0), "Invalid buyer address");
         
-        uint256 tokenId = _tokenIdCounter;
-        _tokenIdCounter++;
-        
-        // 生成彩票的随机种子，用于后续开奖
-        bytes32 randomSeed = keccak256(abi.encodePacked(
-            block.timestamp,
-            block.prevrandao,
-            buyer,
-            tokenId,
-            currentRound
-        ));
-        
-        // 铸造NFT彩票给购买者
-        _mint(buyer, tokenId);
-        
-        // 创建彩票信息
-        tickets[tokenId] = TicketInfo({
-            round: currentRound,
-            isScratched: false,
-            prizeType: 0,
-            prizeAmount: 0,
-            isPrizeClaimed: false,
-            randomSeed: randomSeed
-        });
-        
-        userTickets[buyer].push(tokenId);
+        // 循环铸造多张彩票
+        for (uint256 i = 0; i < ticketCount; i++) {
+            uint256 tokenId = _tokenIdCounter;
+            _tokenIdCounter++;
+            
+            // 生成彩票的随机种子，用于后续开奖
+            bytes32 randomSeed = keccak256(abi.encodePacked(
+                block.timestamp,
+                block.prevrandao,
+                buyer,
+                tokenId,
+                currentRound
+            ));
+            
+            // 铸造NFT彩票给购买者
+            _mint(buyer, tokenId);
+            
+            // 创建彩票信息
+            tickets[tokenId] = TicketInfo({
+                round: currentRound,
+                isScratched: false,
+                prizeType: 0,
+                prizeAmount: 0,
+                isPrizeClaimed: false,
+                randomSeed: randomSeed
+            });
+            
+            userTickets[buyer].push(tokenId);
+            
+            emit TicketPurchased(buyer, tokenId, currentRound);
+        }
         
         // 更新周期统计信息
         RoundInfo storage round = rounds[currentRound];
-        round.totalTickets++;
+        round.totalTickets += ticketCount;
         round.totalSales += msg.value;
         
-        emit TicketPurchased(buyer, tokenId, currentRound);
     }
     
     /// @notice 刮开彩票查看中奖结果（刮刮乐机制）

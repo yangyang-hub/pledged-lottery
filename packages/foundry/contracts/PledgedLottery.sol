@@ -83,8 +83,6 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
     /// @notice 购买彩票
     /// @dev 代理调用LotteryToken合约的buyTicketFor函数
     function buyTicket() external payable onlyActiveRound whenNotPaused nonReentrant {
-        require(msg.value == lotteryToken.TICKET_PRICE(), unicode"彩票价格不正确");
-        
         // 记录收入
         totalRevenue += msg.value;
         
