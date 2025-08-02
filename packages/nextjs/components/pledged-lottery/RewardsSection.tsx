@@ -175,6 +175,17 @@ const TicketCard = ({ tokenId }: { tokenId: bigint }) => {
   const { writeContractAsync: claimPrize } = useScaffoldWriteContract("PledgedLottery");
 
   if (!ticketInfo) return null;
+  
+
+  const getPrizeTypeLabel = (prizeType: number) => {
+    switch (prizeType) {
+      case 1: return { label: "小奖", color: "text-success", icon: GiftIcon };
+      case 2: return { label: "中奖", color: "text-warning", icon: CurrencyDollarIcon };
+      case 3: return { label: "大奖", color: "text-error", icon: TrophyIcon };
+      case 4: return { label: "特等奖", color: "text-purple-500", icon: SparklesIcon };
+      default: return { label: "未中奖", color: "text-gray-500", icon: GiftIcon };
+    }
+  };
 
   const [round, isScratched, prizeType, prizeAmount, isPrizeClaimed] = ticketInfo;
   const prizeInfo = getPrizeTypeLabel(Number(prizeType));
@@ -203,16 +214,6 @@ const TicketCard = ({ tokenId }: { tokenId: bigint }) => {
     } catch (error) {
       console.error("领取奖金失败:", error);
       notification.error("领取奖金失败");
-    }
-  };
-
-  const getPrizeTypeLabel = (prizeType: number) => {
-    switch (prizeType) {
-      case 1: return { label: "小奖", color: "text-success", icon: GiftIcon };
-      case 2: return { label: "中奖", color: "text-warning", icon: CurrencyDollarIcon };
-      case 3: return { label: "大奖", color: "text-error", icon: TrophyIcon };
-      case 4: return { label: "特等奖", color: "text-purple-500", icon: SparklesIcon };
-      default: return { label: "未中奖", color: "text-gray-500", icon: GiftIcon };
     }
   };
 
