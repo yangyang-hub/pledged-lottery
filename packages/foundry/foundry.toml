@@ -30,7 +30,7 @@ pgnTestnet = "https://sepolia.publicgoods.network"
 
 
 # Monad 测试网络
-monadTestnet = "https://testnet1.monad.xyz"
+monadTestnet = "https://testnet-rpc.monad.xyz"
 
 localhost = "http://127.0.0.1:8545"
 

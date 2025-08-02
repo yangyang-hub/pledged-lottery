@@ -15,7 +15,7 @@ export const DEFAULT_ALCHEMY_API_KEY = "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
 
 // Monad 测试链配置
 export const monadTestnet = {
-  id: 41454,
+  id: 10143,
   name: "Monad Testnet",
   network: "monad-testnet",
   nativeCurrency: {
@@ -24,8 +24,8 @@ export const monadTestnet = {
     symbol: "MON",
   },
   rpcUrls: {
-    public: { http: ["https://testnet1.monad.xyz"] },
-    default: { http: ["https://testnet1.monad.xyz"] },
+    public: { http: ["https://testnet-rpc.monad.xyz"] },
+    default: { http: ["https://testnet-rpc.monad.xyz"] },
   },
   blockExplorers: {
     default: { name: "Monad Explorer", url: "https://explorer-testnet.monad.xyz" },
