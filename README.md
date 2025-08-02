@@ -1,4 +1,4 @@
-# 🎲 Pledged Lottery - 质押彩票系统
+# 🎲 Pledged Lottery -Monad刮刮乐
 
 一个基于以太坊的去中心化NFT彩票系统，采用刮刮乐机制，支持公平透明的彩票游戏体验。
 
