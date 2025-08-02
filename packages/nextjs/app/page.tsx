@@ -4,12 +4,12 @@ import Link from "next/link";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import { BanknotesIcon, GiftIcon, PresentationChartLineIcon } from "@heroicons/react/24/outline";
-import { Address } from "~~/components/scaffold-eth";
+import { AdminPanel } from "~~/components/pledged-lottery/AdminPanel";
 import { CycleInfo } from "~~/components/pledged-lottery/CycleInfo";
-import { StakingSection } from "~~/components/pledged-lottery/StakingSection";
 import { LotterySection } from "~~/components/pledged-lottery/LotterySection";
 import { RewardsSection } from "~~/components/pledged-lottery/RewardsSection";
-import { AdminPanel } from "~~/components/pledged-lottery/AdminPanel";
+import { StakingSection } from "~~/components/pledged-lottery/StakingSection";
+import { Address } from "~~/components/scaffold-eth";
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
@@ -24,7 +24,7 @@ const Home: NextPage = () => {
               质押彩票系统
             </span>
           </h1>
-          
+
           <div className="flex justify-center items-center space-x-2 flex-col mb-8">
             <p className="my-2 font-medium">连接地址:</p>
             <Address address={connectedAddress} />
@@ -84,9 +84,7 @@ const Home: NextPage = () => {
               <div className="card-body text-center">
                 <BanknotesIcon className="h-12 w-12 text-primary mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-primary">质押赚取</h3>
-                <p className="text-sm opacity-80">
-                  质押代币到资金池，获得彩票销售收益分红
-                </p>
+                <p className="text-sm opacity-80">质押代币到资金池，获得彩票销售收益分红</p>
               </div>
             </div>
 
@@ -94,9 +92,7 @@ const Home: NextPage = () => {
               <div className="card-body text-center">
                 <GiftIcon className="h-12 w-12 text-secondary mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-secondary">参与彩票</h3>
-                <p className="text-sm opacity-80">
-                  购买NFT彩票，50%综合中奖率，大奖、中奖、小奖三级奖励
-                </p>
+                <p className="text-sm opacity-80">购买NFT彩票，50%综合中奖率，大奖、中奖、小奖三级奖励</p>
               </div>
             </div>
 
@@ -104,9 +100,7 @@ const Home: NextPage = () => {
               <div className="card-body text-center">
                 <PresentationChartLineIcon className="h-12 w-12 text-accent mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-accent">7天周期</h3>
-                <p className="text-sm opacity-80">
-                  每个彩票周期7天，自动开奖，动态调整奖金保证质押收益
-                </p>
+                <p className="text-sm opacity-80">每个彩票周期7天，自动开奖，动态调整奖金保证质押收益</p>
               </div>
             </div>
           </div>

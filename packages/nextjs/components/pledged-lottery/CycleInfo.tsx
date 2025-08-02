@@ -6,7 +6,7 @@ import { ClockIcon, ChartBarIcon, UsersIcon } from "@heroicons/react/24/outline"
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
 export const CycleInfo = () => {
-  const { address } = useAccount();
+  // const { address } = useAccount();
 
   // Read contract data
   const { data: currentCycle } = useScaffoldReadContract({
@@ -100,9 +100,8 @@ export const CycleInfo = () => {
           </div>
           <div className="w-full bg-base-300 rounded-full h-3">
             <div
-              className={`h-3 rounded-full transition-all duration-500 ${
-                isActive ? "bg-gradient-to-r from-primary to-secondary" : "bg-error"
-              }`}
+              className={`h-3 rounded-full transition-all duration-500 ${isActive ? "bg-gradient-to-r from-primary to-secondary" : "bg-error"
+                }`}
               style={{ width: `${getProgressPercentage()}%` }}
             />
           </div>
@@ -119,7 +118,7 @@ export const CycleInfo = () => {
             <div className="stat-value text-primary text-lg">
               {cycleInfo?.[0] ? formatEther(cycleInfo[0]) : "0"}
             </div>
-            <div className="stat-desc">STAKE 代币</div>
+            <div className="stat-desc">MON 代币</div>
           </div>
 
           {/* Total Tickets */}
@@ -145,7 +144,7 @@ export const CycleInfo = () => {
             <div className="stat-value text-accent text-lg">
               {cycleInfo?.[2] ? formatEther(cycleInfo[2]) : "0"}
             </div>
-            <div className="stat-desc">ETH</div>
+            <div className="stat-desc">MON</div>
           </div>
         </div>
 
