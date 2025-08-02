@@ -5,6 +5,19 @@ import "forge-std/Test.sol";
 import "../contracts/PledgedLottery.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
+/**
+ * @notice Mock ERC20 token for testing
+ */
+contract MockERC20 is ERC20 {
+    constructor() ERC20("StakingToken", "STAKE") {
+        _mint(msg.sender, 1000000 * 10**18);
+    }
+    
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
+}
+
 contract PledgedLotteryTest is Test {
     PledgedLottery public lotteryContract;
     MockERC20 public stakingToken;
@@ -26,7 +39,7 @@ contract PledgedLotteryTest is Test {
         stakingToken = new MockERC20();
         
         // Deploy lottery contract
-        lotteryContract = new PledgedLottery(address(stakingToken), owner);
+        lotteryContract = new PledgedLottery(owner, address(stakingToken));
         
         // Mint tokens to test users
         stakingToken.mint(staker1, 10000 * 10**18);
@@ -96,14 +109,13 @@ contract PledgedLotteryTest is Test {
         assertEq(lotteryContract.ownerOf(1), player1);
         
         // Check ticket info
-        (uint256 cycle, address owner, bool isRedeemed, uint256 prizeType, uint256 prizeAmount) = 
-            lotteryContract.getTicketInfo(1);
+        PledgedLottery.TicketInfo memory ticketInfo = lotteryContract.getTicketInfo(1);
         
-        assertEq(cycle, 1);
-        assertEq(owner, player1);
-        assertEq(isRedeemed, false);
-        assertEq(prizeType, 0);
-        assertEq(prizeAmount, 0);
+        assertEq(ticketInfo.cycle, 1);
+        assertEq(ticketInfo.owner, player1);
+        assertEq(ticketInfo.isRedeemed, false);
+        assertEq(ticketInfo.prizeType, 0);
+        assertEq(ticketInfo.prizeAmount, 0);
         
         vm.stopPrank();
     }

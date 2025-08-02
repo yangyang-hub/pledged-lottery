@@ -2,21 +2,9 @@
 pragma solidity ^0.8.19;
 
 import "./DeployHelpers.s.sol";
-import "../contracts/YourContract.sol";
+import "../contracts/PledgedLottery.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-/**
- * @notice Mock ERC20 token for testing
- */
-contract MockStakingToken is ERC20 {
-    constructor() ERC20("StakingToken", "STAKE") {
-        _mint(msg.sender, 1000000 * 10**18);
-    }
-    
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
-    }
-}
 
 /**
  * @notice Deploy script for PledgedLottery contract
@@ -39,26 +27,15 @@ contract DeployYourContract is ScaffoldETHDeploy {
      *      - Export contract addresses & ABIs to `nextjs` packages
      */
     function run() external ScaffoldEthDeployerRunner {
-        // Deploy mock staking token first (for local testing)
-        MockStakingToken stakingToken = new MockStakingToken();
-        console.logString(
-            string.concat(
-                "MockStakingToken deployed at: ",
-                vm.toString(address(stakingToken))
-            )
-        );
+        
         
         // Deploy PledgedLottery contract
-        PledgedLottery lotteryContract = new PledgedLottery(address(stakingToken), deployer);
+        PledgedLottery lotteryContract = new PledgedLottery(deployer);
         console.logString(
             string.concat(
                 "PledgedLottery deployed at: ",
                 vm.toString(address(lotteryContract))
             )
         );
-        
-        // Optional: Mint some initial tokens to deployer for testing
-        stakingToken.mint(deployer, 100000 * 10**18);
-        console.logString("Minted 100,000 STAKE tokens to deployer for testing");
     }
 }
