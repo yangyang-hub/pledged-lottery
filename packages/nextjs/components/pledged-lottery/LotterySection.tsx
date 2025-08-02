@@ -33,7 +33,7 @@ export const LotterySection = () => {
 
   const { data: roundInfo } = useScaffoldReadContract({
     contractName: "PledgedLottery",
-    functionName: "getRoundInfo", 
+    functionName: "getRoundInfo",
     args: [currentRound],
   });
 
@@ -102,7 +102,7 @@ export const LotterySection = () => {
             <div>
               <p className="text-gray-500">销售额</p>
               <p className="text-xl font-mono">
-                {roundInfo[1] ? formatEther(roundInfo[1]) : "0"} ETH
+                {roundInfo[1] ? formatEther(roundInfo[1]) : "0"} MON
               </p>
             </div>
           </div>
@@ -126,7 +126,7 @@ export const LotterySection = () => {
             <TicketIcon className="h-5 w-5" />
             购买彩票
           </h3>
-          
+
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <label className="text-sm font-medium">数量:</label>
@@ -150,12 +150,12 @@ export const LotterySection = () => {
             <div className="bg-base-200 rounded-lg p-3">
               <div className="flex justify-between text-sm">
                 <span>单价:</span>
-                <span className="font-mono">{TICKET_PRICE} ETH</span>
+                <span className="font-mono">{TICKET_PRICE} MON</span>
               </div>
               <div className="flex justify-between text-sm mt-1">
                 <span>总计:</span>
                 <span className="font-mono text-primary">
-                  {(parseFloat(TICKET_PRICE) * ticketCount).toFixed(3)} ETH
+                  {(parseFloat(TICKET_PRICE) * ticketCount).toFixed(3)} MON
                 </span>
               </div>
             </div>

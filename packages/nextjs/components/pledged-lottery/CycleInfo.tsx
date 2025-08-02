@@ -6,7 +6,7 @@ import { ClockIcon, ChartBarIcon, UsersIcon } from "@heroicons/react/24/outline"
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
 export const CycleInfo = () => {
-  const { address } = useAccount();
+  // const { address } = useAccount();
 
   // Read contract data
   const { data: currentRound } = useScaffoldReadContract({
@@ -68,8 +68,17 @@ export const CycleInfo = () => {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="avatar placeholder">
-              <div className="bg-primary text-primary-content rounded-full w-12 h-12">
-                <span className="text-xl font-bold">#{currentRound?.toString() || "1"}</span>
+              <div
+                className="bg-primary text-primary-content rounded-full w-12 h-12"
+                style={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <span style={{ textAlign: "center" }} className="text-xl font-bold">
+                  #{currentRound?.toString() || "1"}
+                </span>
               </div>
             </div>
             <div>
@@ -100,9 +109,8 @@ export const CycleInfo = () => {
           </div>
           <div className="w-full bg-base-300 rounded-full h-3">
             <div
-              className={`h-3 rounded-full transition-all duration-500 ${
-                isActive ? "bg-gradient-to-r from-primary to-secondary" : "bg-error"
-              }`}
+              className={`h-3 rounded-full transition-all duration-500 ${isActive ? "bg-gradient-to-r from-primary to-secondary" : "bg-error"
+                }`}
               style={{ width: `${getProgressPercentage()}%` }}
             />
           </div>
@@ -133,7 +141,7 @@ export const CycleInfo = () => {
             <div className="stat-value text-accent text-lg">
               {roundInfo?.[1] ? formatEther(roundInfo[1]) : "0"}
             </div>
-            <div className="stat-desc">ETH</div>
+            <div className="stat-desc">MON</div>
           </div>
         </div>
 
@@ -145,7 +153,7 @@ export const CycleInfo = () => {
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-secondary rounded-full"></div>
-            <span>彩票价格: 0.01 ETH</span>
+            <span>彩票价格: 0.01 MON</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-accent rounded-full"></div>

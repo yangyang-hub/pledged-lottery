@@ -127,15 +127,15 @@ export const AdminPanel = () => {
               </div>
               <div>
                 <p className="text-gray-500">总收入</p>
-                <p className="font-mono text-lg">{contractStats[1] ? (Number(contractStats[1]) / 1e18).toFixed(3) : "0"} ETH</p>
+                <p className="font-mono text-lg">{contractStats[1] ? (Number(contractStats[1]) / 1e18).toFixed(3) : "0"} MON</p>
               </div>
               <div>
                 <p className="text-gray-500">已发奖金</p>
-                <p className="font-mono text-lg">{contractStats[2] ? (Number(contractStats[2]) / 1e18).toFixed(3) : "0"} ETH</p>
+                <p className="font-mono text-lg">{contractStats[2] ? (Number(contractStats[2]) / 1e18).toFixed(3) : "0"} MON</p>
               </div>
               <div>
                 <p className="text-gray-500">系统余额</p>
-                <p className="font-mono text-lg">{contractStats[3] ? (Number(contractStats[3]) / 1e18).toFixed(3) : "0"} ETH</p>
+                <p className="font-mono text-lg">{contractStats[3] ? (Number(contractStats[3]) / 1e18).toFixed(3) : "0"} MON</p>
               </div>
             </div>
           </div>
@@ -155,7 +155,7 @@ export const AdminPanel = () => {
             </div>
             <div>
               <p className="text-gray-500">销售额</p>
-              <p className="font-mono text-lg">{roundInfo?.[1] ? (Number(roundInfo[1]) / 1e18).toFixed(3) : "0"} ETH</p>
+              <p className="font-mono text-lg">{roundInfo?.[1] ? (Number(roundInfo[1]) / 1e18).toFixed(3) : "0"} MON</p>
             </div>
           </div>
           <div className="mt-3">

@@ -116,13 +116,13 @@ export const StakingSection = () => {
           <div>
             <p className="text-gray-500">代币余额</p>
             <p className="font-mono text-lg">
-              {tokenBalance ? formatEther(tokenBalance) : "0"} STAKE
+              {tokenBalance ? formatEther(tokenBalance) : "0"} MON
             </p>
           </div>
           <div>
             <p className="text-gray-500">已质押</p>
             <p className="font-mono text-lg text-primary">
-              {stakedAmount ? formatEther(stakedAmount) : "0"} STAKE
+              {stakedAmount ? formatEther(stakedAmount) : "0"} MON
             </p>
           </div>
         </div>
@@ -185,7 +185,7 @@ export const StakingSection = () => {
         <div className="text-sm">
           <p className="font-medium">质押说明:</p>
           <ul className="mt-2 space-y-1 text-xs">
-            <li>• 最小质押金额: 1000 STAKE</li>
+            <li>• 最小质押金额: 1000 MON</li>
             <li>• 质押者按比例分享彩票销售收益</li>
             <li>• 可随时取消质押（当前周期内）</li>
           </ul>

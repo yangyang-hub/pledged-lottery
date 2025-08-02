@@ -77,15 +77,7 @@ export const RewardsSection = () => {
     }
   };
 
-  const getPrizeTypeLabel = (prizeType: number) => {
-    switch (prizeType) {
-      case 1: return { label: "小奖", color: "text-success", icon: GiftIcon };
-      case 2: return { label: "中奖", color: "text-warning", icon: CurrencyDollarIcon };
-      case 3: return { label: "大奖", color: "text-error", icon: TrophyIcon };
-      case 4: return { label: "特等奖", color: "text-purple-500", icon: SparklesIcon };
-      default: return { label: "未中奖", color: "text-gray-500", icon: GiftIcon };
-    }
-  };
+ 
 
   // Get ticket details for each ticket
   const useTicketInfo = (tokenId: bigint) => {
@@ -166,7 +158,7 @@ export const RewardsSection = () => {
 // Ticket Card Component
 const TicketCard = ({ tokenId }: { tokenId: bigint }) => {
   const { data: ticketInfo } = useScaffoldReadContract({
-    contractName: "PledgedLottery", 
+    contractName: "PledgedLottery",
     functionName: "getTicketInfo",
     args: [tokenId],
   });
@@ -188,6 +180,7 @@ const TicketCard = ({ tokenId }: { tokenId: bigint }) => {
   };
 
   const [round, isScratched, prizeType, prizeAmount, isPrizeClaimed] = ticketInfo;
+ 
   const prizeInfo = getPrizeTypeLabel(Number(prizeType));
   const IconComponent = prizeInfo.icon;
 
@@ -217,6 +210,8 @@ const TicketCard = ({ tokenId }: { tokenId: bigint }) => {
     }
   };
 
+
+
   return (
     <div className={`card bg-base-200 ${Number(prizeType) > 0 ? 'border border-success' : ''}`}>
       <div className="card-body p-4">
@@ -228,7 +223,7 @@ const TicketCard = ({ tokenId }: { tokenId: bigint }) => {
               <p className="text-xs text-gray-500">第 {round.toString()} 轮</p>
             </div>
           </div>
-          
+
           <div className="text-right">
             {isScratched ? (
               <>
@@ -237,7 +232,7 @@ const TicketCard = ({ tokenId }: { tokenId: bigint }) => {
                 </p>
                 {Number(prizeType) > 0 && (
                   <p className="text-xs font-mono">
-                    {formatEther(prizeAmount)} ETH
+                    {formatEther(prizeAmount)} MON
                   </p>
                 )}
               </>

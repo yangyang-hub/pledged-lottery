@@ -8,7 +8,8 @@ import { Address } from "~~/components/scaffold-eth";
 import { CycleInfo } from "~~/components/pledged-lottery/CycleInfo";
 import { LotterySection } from "~~/components/pledged-lottery/LotterySection";
 import { RewardsSection } from "~~/components/pledged-lottery/RewardsSection";
-import { AdminPanel } from "~~/components/pledged-lottery/AdminPanel";
+import { StakingSection } from "~~/components/pledged-lottery/StakingSection";
+// import { Address } from "~~/components/scaffold-eth";
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
@@ -23,7 +24,7 @@ const Home: NextPage = () => {
               质押彩票系统
             </span>
           </h1>
-          
+
           <div className="flex justify-center items-center space-x-2 flex-col mb-8">
             <p className="my-2 font-medium">连接地址:</p>
             <Address address={connectedAddress} />
@@ -33,7 +34,7 @@ const Home: NextPage = () => {
           <CycleInfo />
 
           {/* Admin Panel - Only visible to admin */}
-          <AdminPanel />
+          {/* <AdminPanel /> */}
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">

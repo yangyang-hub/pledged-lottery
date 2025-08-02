@@ -3,11 +3,11 @@
  * You should not edit it manually or your changes might be overwritten.
  */
 import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
-
+import PledgedLotteryAbi from "./abi/PledgedLottery.json";
 const deployedContracts = {
   31337: {
     PledgedLottery: {
-      address: "0xb19b36b1456e65e3a6d514d3f715f204bd59f431",
+      address: "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
       abi: [
         {
           type: "constructor",
