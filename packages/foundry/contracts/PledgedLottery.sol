@@ -2,460 +2,329 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import {console} from "forge-std/console.sol";
-import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {LotteryToken} from "./LotteryToken.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title PledgedLottery
- * @dev 质押彩票智能合约系统
- * 用户可通过质押代币参与资金池，彩票参与者通过代币铸造NFT参与抽奖
- * 每个周期为7天，奖金动态调整确保资金池质押收益
+ * @dev 彩票系统主合约 - 管理彩票周期、奖金池和奖金发放
+ * 基于NFT的彩票系统，支持7天周期、手动刮刮乐开奖、50%综合中奖率
+ * 无平台手续费，所有销售收入用作奖金池
  */
-contract PledgedLottery is ERC721, Ownable, ReentrancyGuard {
+contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
+    
+    /// @notice 彩票NFT合约地址
+    LotteryToken public immutable lotteryToken;
     
     /// @notice 每个彩票周期的持续时间（7天）
-    uint256 public constant CYCLE_DURATION = 7 days;
-    
-    /// @notice 单张彩票的价格（0.1）
-    uint256 public constant TICKET_PRICE = 0.1 ether;
-    
-    /// @notice 最小质押量（1）
-    uint256 public constant MIN_STAKE_AMOUNT = 1 ether;
+    uint256 public constant ROUND_DURATION = 7 days;
     
     /// @notice 当前活跃的彩票周期编号
-    uint256 public currentCycle;
+    uint256 public currentRound;
     
     /// @notice 当前周期的开始时间戳
-    uint256 public cycleStartTime;
+    uint256 public roundStartTime;
     
-    /// @notice 彩票NFT的ID计数器
-    uint256 private _tokenIdCounter;
+    /// @notice 合约的总收入（用于统计）
+    uint256 public totalRevenue;
     
-    /// @notice 小奖中奖率（基于总中奖率的占比，实际概率40%）
-    uint256 public constant SMALL_PRIZE_RATE = 4000;
+    /// @notice 总发放奖金（用于统计）
+    uint256 public totalPrizePaid;
     
-    /// @notice 中奖中奖率（基于总中奖率的占比，实际概率8%）
-    uint256 public constant MEDIUM_PRIZE_RATE = 800;
-    
-    /// @notice 大奖中奖率（基于总中奖率的占比，实际概率2%）
-    uint256 public constant BIG_PRIZE_RATE = 200;
-    
-    /// @notice 总中奖率（50%的彩票会中奖）
-    uint256 public constant TOTAL_WIN_RATE = 5000;
-    
-    /// @notice 每个彩票周期的信息结构体
-    struct CycleInfo {
-        /// @notice 该周期内总质押代币数量
-        uint256 totalStaked;
-        /// @notice 该周期内售出的彩票总数
-        uint256 totalTickets;
-        /// @notice 该周期内彩票销售总收入（ETH）
-        uint256 totalSales;
-        /// @notice 分配给质押者的奖励池金额
-        uint256 rewardPool;
-        /// @notice 该周期是否已完成（抽奖和奖励分配）
-        bool isFinalized;
-        /// @notice 每个地址在该周期的质押数量
-        mapping(address => uint256) stakedAmounts;
-        /// @notice 每个地址在该周期可领取的质押奖励
-        mapping(address => uint256) stakingRewards;
+    /// @notice 批量奖金领取的奖金信息结构体
+    struct PrizeInfo {
+        /// @notice 彩票ID
+        uint256 tokenId;
+        /// @notice 奖金金额
+        uint256 amount;
     }
     
-    /// @notice 彩票信息结构体
-    struct TicketInfo {
-        /// @notice 彩票所属的周期编号
-        uint256 cycle;
-        /// @notice 彩票持有者地址
-        address owner;
-        /// @notice 奖金是否已被领取
-        bool isRedeemed;
-        /// @notice 奖项类型：0=未中奖, 1=小奖, 2=中奖, 3=大奖
-        uint256 prizeType;
-        /// @notice 奖金金额（以wei为单位）
-        uint256 prizeAmount;
-    }
-    
-    /// @notice 每个周期的详细信息映射
-    mapping(uint256 => CycleInfo) public cycles;
-    
-    /// @notice 彩票ID到彩票信息的映射
-    mapping(uint256 => TicketInfo) public tickets;
-    
-    /// @notice 用户地址到其拥有的彩票ID列表的映射
-    mapping(address => uint256[]) public userTickets;
-    
-    /// @notice 每个周期参与质押的用户地址列表
-    mapping(uint256 => address[]) public cycleStakers;
-    
-    /// @notice 新周期开始时触发
-    /// @param cycle 周期编号
-    /// @param startTime 开始时间戳
-    event CycleStarted(uint256 indexed cycle, uint256 startTime);
-    
-    /// @notice 用户质押代币时触发
-    /// @param staker 质押者地址
-    /// @param amount 质押数量
-    /// @param cycle 质押的周期
-    event TokensStaked(address indexed staker, uint256 amount, uint256 cycle);
-    
-    /// @notice 用户取消质押时触发
-    /// @param staker 取消质押者地址
-    /// @param amount 取消质押数量
-    /// @param cycle 取消质押的周期
-    event TokensUnstaked(address indexed staker, uint256 amount, uint256 cycle);
-    
-    /// @notice 购买彩票时触发
+    /// @notice 彩票购买统计事件
     /// @param buyer 购买者地址
-    /// @param tokenId 彩票NFT的ID
-    /// @param cycle 购买彩票的周期
-    event TicketMinted(address indexed buyer, uint256 indexed tokenId, uint256 cycle);
+    /// @param round 购买周期
+    /// @param ticketId 彩票ID
+    /// @param amount 支付金额
+    event TicketPurchased(address indexed buyer, uint256 indexed round, uint256 ticketId, uint256 amount);
     
-    /// @notice 彩票抽奖完成时触发
-    /// @param cycle 抽奖的周期
-    /// @param totalWinners 总中奖人数
-    event LotteryDrawn(uint256 indexed cycle, uint256 totalWinners);
+    /// @notice 周期结束事件
+    /// @param round 结束的周期号
+    /// @param totalTickets 该周期总彩票数
+    /// @param prizePool 奖金池金额
+    event RoundFinalized(uint256 indexed round, uint256 totalTickets, uint256 prizePool);
     
-    /// @notice 奖金被领取时触发
+    /// @notice 奖金领取事件
     /// @param winner 中奖者地址
-    /// @param tokenId 中奖彩票ID
-    /// @param prizeAmount 奖金金额
-    /// @param prizeType 奖项类型
-    event PrizeClaimed(address indexed winner, uint256 indexed tokenId, uint256 prizeAmount, uint256 prizeType);
+    /// @param round 中奖周期
+    /// @param amount 奖金金额
+    /// @param ticketCount 中奖彩票数量
+    event PrizesClaimed(address indexed winner, uint256 indexed round, uint256 amount, uint256 ticketCount);
     
-    /// @notice 质押奖励被领取时触发
-    /// @param staker 质押者地址
-    /// @param amount 奖励金额
-    /// @param cycle 奖励来源周期
-    event StakingRewardClaimed(address indexed staker, uint256 amount, uint256 cycle);
+    /// @notice 紧急提取事件
+    /// @param owner 合约所有者
+    /// @param amount 提取金额
+    event EmergencyWithdraw(address indexed owner, uint256 amount);
 
     /// @notice 初始化合约
     /// @param _owner 合约所有者地址
-    constructor(address _owner) ERC721("LotteryTicket", "TICKET") Ownable(_owner) {
-        currentCycle = 1;
-        cycleStartTime = block.timestamp;   
-        
-        emit CycleStarted(currentCycle, cycleStartTime);
+    constructor(address _owner) Ownable(_owner) {
+        lotteryToken = new LotteryToken(_owner, address(this));
+        currentRound = 1;
+        roundStartTime = block.timestamp;
     }
     
     /// @notice 限制只能在活跃周期内执行的操作
-    /// @dev 检查当前时间是否在周期结束时间之前
-    modifier onlyActiveCycle() {
-        require(block.timestamp < cycleStartTime + CYCLE_DURATION, "Cycle ended");
+    modifier onlyActiveRound() {
+        require(block.timestamp < roundStartTime + ROUND_DURATION, unicode"当前周期已结束");
         _;
     }
     
-    /// @notice 限制只能对已结束周期执行的操作
-    /// @param cycle 要检查的周期编号
-    /// @dev 检查指定周期是否已经结束
-    modifier onlyEndedCycle(uint256 cycle) {
-        require(cycle < currentCycle, "Cycle not ended");
-        _;
+    /// @notice 购买彩票
+    /// @dev 代理调用LotteryToken合约的buyTicketFor函数
+    function buyTicket() external payable onlyActiveRound whenNotPaused nonReentrant {
+        require(msg.value == lotteryToken.TICKET_PRICE(), unicode"彩票价格不正确");
+        
+        // 记录收入
+        totalRevenue += msg.value;
+        
+        // 将ETH转发给LotteryToken合约并调用buyTicketFor
+        lotteryToken.buyTicketFor{value: msg.value}(msg.sender);
+        
+        emit TicketPurchased(msg.sender, currentRound, lotteryToken.totalSupply(), msg.value);
     }
-
-    /// @notice 质押代币到当前周期
-    /// @dev 用户需要先授权合约使用其代币，只能在活跃周期内执行
-    function stakeTokens() public payable onlyActiveCycle nonReentrant {
-        require(msg.value >= MIN_STAKE_AMOUNT, "Insufficient stake amount");
+    
+    /// @notice 刮开彩票（刮刮乐机制）
+    /// @param tokenId 要刮开的彩票ID
+    function scratchTicket(uint256 tokenId) external whenNotPaused {
+        // 使用scratchTicketFor代理调用
+        lotteryToken.scratchTicketFor(tokenId, msg.sender);
+    }
+    
+    /// @notice 领取单张彩票奖金
+    /// @param tokenId 中奖彩票的NFT ID
+    function claimPrize(uint256 tokenId) external whenNotPaused nonReentrant {
+        // 获取奖金金额用于统计
+        LotteryToken.TicketInfo memory ticketInfo = lotteryToken.getTicketInfo(tokenId);
+        uint256 prizeAmount = ticketInfo.prizeAmount;
         
-        CycleInfo storage cycle = cycles[currentCycle];
+        // 调用LotteryToken合约的claimPrizeFor函数
+        lotteryToken.claimPrizeFor(tokenId, msg.sender);
         
-        // 如果是第一次质押，将用户添加到质押者列表
-        if (cycle.stakedAmounts[msg.sender] == 0) {
-            cycleStakers[currentCycle].push(msg.sender);
+        // 更新统计
+        totalPrizePaid += prizeAmount;
+    }
+    
+    /// @notice 批量领取多张彩票奖金
+    /// @param tokenIds 中奖彩票ID数组
+    /// @dev 用户可以一次性领取多张中奖彩票的奖金，降低gas成本
+    function claimPrizes(uint256[] calldata tokenIds) external whenNotPaused nonReentrant {
+        require(tokenIds.length > 0, unicode"彩票ID数组不能为空");
+        require(tokenIds.length <= 50, unicode"一次最多领取50张彩票奖金"); // 防止gas超限
+        
+        uint256 totalAmount = 0;
+        uint256 validTickets = 0;
+        
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            uint256 tokenId = tokenIds[i];
+            
+            // 检查是否为有效的中奖彩票
+            try lotteryToken.ownerOf(tokenId) returns (address owner) {
+                if (owner == msg.sender) {
+                    LotteryToken.TicketInfo memory ticketInfo = lotteryToken.getTicketInfo(tokenId);
+                    
+                    if (ticketInfo.isScratched && ticketInfo.prizeType > 0 && !ticketInfo.isPrizeClaimed) {
+                        try lotteryToken.claimPrizeFor(tokenId, msg.sender) {
+                            totalAmount += ticketInfo.prizeAmount;
+                            validTickets++;
+                        } catch {
+                            // 如果某张彩票领取失败，继续处理其他彩票
+                            continue;
+                        }
+                    }
+                }
+            } catch {
+                // 如果彩票不存在，继续处理其他彩票
+                continue;
+            }
         }
         
-        cycle.stakedAmounts[msg.sender] += msg.value;
-        cycle.totalStaked += msg.value;
+        require(validTickets > 0, unicode"没有可领取的中奖彩票");
         
-        emit TokensStaked(msg.sender, msg.value, currentCycle);
-    }
-    
-    /// @notice 取消质押的代币
-    /// @param amount 要取消质押的代币数量
-    /// @dev 只能取消当前周期内的质押，且不能超过已质押的数量
-    function unstakeTokens(uint256 amount) external nonReentrant {
-        CycleInfo storage cycle = cycles[currentCycle];
-        require(cycle.stakedAmounts[msg.sender] >= amount, "Insufficient staked amount");
+        // 更新统计
+        totalPrizePaid += totalAmount;
         
-        cycle.stakedAmounts[msg.sender] -= amount;
-        cycle.totalStaked -= amount;
+        // 获取当前周期（从第一张有效彩票获取）
+        uint256 round = currentRound;
+        if (tokenIds.length > 0) {
+            LotteryToken.TicketInfo memory firstTicketInfo = lotteryToken.getTicketInfo(tokenIds[0]);
+            round = firstTicketInfo.round;
+        }
         
-        (bool success, ) = payable(msg.sender).call{value: amount}("");
-        require(success, "Transfer failed");
-        
-        emit TokensUnstaked(msg.sender, amount, currentCycle);
-    }
-    
-    /// @notice 购买彩票NFT
-    /// @dev 需要支付精确的彩票价格（0.1 ETH），只能在活跃周期内购买
-    function buyTicket() external payable onlyActiveCycle nonReentrant {
-        require(msg.value == TICKET_PRICE, "Incorrect ticket price");
-        
-        _tokenIdCounter++;
-        uint256 tokenId = _tokenIdCounter;
-        
-        // 铸造NFT彩票给购买者
-        _mint(msg.sender, tokenId);
-        
-        // 创建彩票信息
-        tickets[tokenId] = TicketInfo({
-            cycle: currentCycle,
-            owner: msg.sender,
-            isRedeemed: false,
-            prizeType: 0,  // 初始为未中奖
-            prizeAmount: 0
-        });
-        
-        userTickets[msg.sender].push(tokenId);
-        
-        // 更新周期统计信息
-        CycleInfo storage cycle = cycles[currentCycle];
-        cycle.totalTickets++;
-        cycle.totalSales += msg.value;
-        
-        emit TicketMinted(msg.sender, tokenId, currentCycle);
+        emit PrizesClaimed(msg.sender, round, totalAmount, validTickets);
     }
     
     /// @notice 结束当前周期并开始新周期
     /// @dev 只有合约所有者可以调用，必须在周期结束后才能执行
-    function finalizeCycle() external onlyOwner {
-        require(block.timestamp >= cycleStartTime + CYCLE_DURATION, "Cycle not ended");
-        require(!cycles[currentCycle].isFinalized, "Cycle already finalized");
+    function finalizeRound() external onlyOwner {
+        require(block.timestamp >= roundStartTime + ROUND_DURATION, unicode"当前周期尚未结束");
         
-        // 执行抽奖和奖励分配
-        _drawLottery();
-        _distributeRewards();
+        // 调用LotteryToken合约结束当前周期
+        lotteryToken.endCurrentRound();
         
-        cycles[currentCycle].isFinalized = true;
+        // 获取当前周期信息用于事件
+        LotteryToken.RoundInfo memory roundInfo = lotteryToken.getRoundInfo(currentRound);
         
-        // 开始新周期
-        currentCycle++;
-        cycleStartTime = block.timestamp;
+        emit RoundFinalized(currentRound, roundInfo.totalTickets, roundInfo.prizePool);
         
-        emit CycleStarted(currentCycle, cycleStartTime);
+        // 更新本合约的周期信息
+        currentRound++;
+        roundStartTime = block.timestamp;
     }
     
-    function _drawLottery() internal {
-        CycleInfo storage cycle = cycles[currentCycle];
-        uint256 totalTickets = cycle.totalTickets;
-        
-        if (totalTickets == 0) return;
-        
-        uint256 totalPrizePool = cycle.totalSales;
-        uint256 dynamicAdjustment = _calculateDynamicAdjustment(cycle.totalSales, cycle.totalStaked);
-        
-        // 动态调整奖金池大小
-        uint256 adjustedPrizePool = (totalPrizePool * dynamicAdjustment) / 10000;
-        cycle.rewardPool = totalPrizePool - adjustedPrizePool;
-        
-        // 计算各奖项数量
-        uint256 expectedWinners = (totalTickets * TOTAL_WIN_RATE) / 10000;
-        uint256 bigPrizeWinners = (expectedWinners * BIG_PRIZE_RATE) / TOTAL_WIN_RATE;
-        uint256 mediumPrizeWinners = (expectedWinners * MEDIUM_PRIZE_RATE) / TOTAL_WIN_RATE;
-        uint256 smallPrizeWinners = expectedWinners - bigPrizeWinners - mediumPrizeWinners;
-        
-        // 计算奖金金额
-        uint256 bigPrizeAmount = bigPrizeWinners > 0 ? (adjustedPrizePool * 5000) / (10000 * bigPrizeWinners) : 0;
-        uint256 mediumPrizeAmount = mediumPrizeWinners > 0 ? (adjustedPrizePool * 3000) / (10000 * mediumPrizeWinners) : 0;
-        uint256 smallPrizeAmount = smallPrizeWinners > 0 ? (adjustedPrizePool * 2000) / (10000 * smallPrizeWinners) : 0;
-        
-        // 随机分配奖项
-        uint256 winnersCount = 0;
-        for (uint256 i = 1; i <= totalTickets; i++) {
-            uint256 tokenId = _tokenIdCounter - totalTickets + i;
-            uint256 randomValue = _generateRandom(tokenId, totalTickets);
-            
-            if (randomValue < BIG_PRIZE_RATE && bigPrizeWinners > 0) {
-                tickets[tokenId].prizeType = 3;
-                tickets[tokenId].prizeAmount = bigPrizeAmount;
-                bigPrizeWinners--;
-                winnersCount++;
-            } else if (randomValue < BIG_PRIZE_RATE + MEDIUM_PRIZE_RATE && mediumPrizeWinners > 0) {
-                tickets[tokenId].prizeType = 2;
-                tickets[tokenId].prizeAmount = mediumPrizeAmount;
-                mediumPrizeWinners--;
-                winnersCount++;
-            } else if (randomValue < TOTAL_WIN_RATE && smallPrizeWinners > 0) {
-                tickets[tokenId].prizeType = 1;
-                tickets[tokenId].prizeAmount = smallPrizeAmount;
-                smallPrizeWinners--;
-                winnersCount++;
-            }
-        }
-        
-        emit LotteryDrawn(currentCycle, winnersCount);
+    // ========== 管理员函数 ==========
+    
+    /// @notice 暂停合约（紧急情况下使用）
+    function pause() external onlyOwner {
+        _pause();
     }
     
-    /// @notice 分配质押奖励
-    /// @dev 根据质押数量和总质押量计算奖励，并分配给质押者
-    function _distributeRewards() internal {
-        CycleInfo storage cycle = cycles[currentCycle];
-        address[] memory stakers = cycleStakers[currentCycle];
-        
-        if (cycle.totalStaked == 0 || cycle.rewardPool == 0) return;
-        
-        for (uint256 i = 0; i < stakers.length; i++) {
-            address staker = stakers[i];
-            uint256 stakedAmount = cycle.stakedAmounts[staker];
-            
-            if (stakedAmount > 0) {
-                uint256 reward = (cycle.rewardPool * stakedAmount) / cycle.totalStaked;
-                cycle.stakingRewards[staker] = reward;
-            }
-        }
+    /// @notice 恢复合约运行
+    function unpause() external onlyOwner {
+        _unpause();
     }
     
-    /// @notice 计算奖金池的动态调整系数
-    /// @param totalSales 当前周期的彩票销售总收入
-    /// @param totalStaked 当前周期的总质押量
-    /// @return 动态调整系数（基数为10000）
-    /// @dev 动态调整算法:
-    /// - 销售额 ≥ 质押总额: 奖金池占总销售额的70%
-    /// - 销售额 ≥ 50%质押总额: 奖金池占总销售额的60%  
-    /// - 销售额 < 50%质押总额: 奖金池占总销售额的40%
-    /// 这样设计可以确保在彩票销售不佳时，质押者仍然有合理的收益
-    function _calculateDynamicAdjustment(uint256 totalSales, uint256 totalStaked) internal pure returns (uint256) {
-        if (totalStaked == 0) return 5000; // 默认情况下奖金池占 50%
+    /// @notice 紧急提取合约余额（仅在紧急情况下使用）
+    /// @dev 只有在合约暂停状态下才能执行
+    function emergencyWithdraw() external onlyOwner whenPaused {
+        uint256 balance = address(this).balance;
+        require(balance > 0, unicode"合约余额为零");
         
-        // 计算销售额与质押总量的比例（放大万倍以避免精度损失）
-        uint256 salesStakeRatio = (totalSales * 10000) / totalStaked;
+        (bool success, ) = payable(owner()).call{value: balance}("");
+        require(success, unicode"提取失败");
         
-        if (salesStakeRatio >= 10000) {
-            return 7000; // 销售额 ≥ 质押总额，奖金池 70%
-        } else if (salesStakeRatio >= 5000) {
-            return 6000; // 销售额 ≥ 50%质押总额，奖金池 60%
-        } else {
-            return 4000; // 销售额 < 50%质押总额，奖金池 40%，确保质押收益
-        }
-    }
-    
-    /// @notice 生成伪随机数给彩票抽奖使用
-    /// @param tokenId 彩票NFT的ID
-    /// @param totalTickets 当前周期的彩票总数
-    /// @return 0到9999之间的伪随机数
-    /// @dev 使用多个不可预测的区块链参数组合生成随机数:
-    /// - block.timestamp: 当前区块的时间戳
-    /// - block.prevrandao: 上一个区块的随机值 (EIP-4399)
-    /// - tokenId: 彩票的唯一ID
-    /// - totalTickets: 彩票总数，增加随机性  
-    /// - msg.sender: 调用者地址
-    /// 注意: 这不是真正的随机数，存在被矿工操纵的风险
-    function _generateRandom(uint256 tokenId, uint256 totalTickets) internal view returns (uint256) {
-        return uint256(keccak256(abi.encodePacked(
-            block.timestamp,
-            block.prevrandao,
-            tokenId,
-            totalTickets,
-            msg.sender
-        ))) % 10000; // 返回 0-9999 的随机数
-    }
-    
-    /// @notice 领取彩票中奖奖金
-    /// @param tokenId 中奖彩票的NFT ID
-    /// @dev 只有彩票持有者可以领取，且只能领取一次
-    function claimPrize(uint256 tokenId) external nonReentrant {
-        require(ownerOf(tokenId) == msg.sender, "Not token owner");
-        TicketInfo storage ticket = tickets[tokenId];
-        require(!ticket.isRedeemed, "Prize already claimed");
-        require(ticket.prizeType > 0, "No prize to claim");
-        require(cycles[ticket.cycle].isFinalized, "Cycle not finalized");
-        
-        ticket.isRedeemed = true;
-        
-        // 转账奖金给中奖者
-        (bool success, ) = payable(msg.sender).call{value: ticket.prizeAmount}("");
-        require(success, "Prize transfer failed");
-        
-        emit PrizeClaimed(msg.sender, tokenId, ticket.prizeAmount, ticket.prizeType);
-    }
-    
-    /// @notice 领取指定周期的质押奖励
-    /// @param cycle 要领取奖励的周期编号
-    /// @dev 只能领取已结束周期的奖励，且每个地址每个周期只能领取一次
-    function claimStakingReward(uint256 cycle) external onlyEndedCycle(cycle) nonReentrant {
-        CycleInfo storage cycleInfo = cycles[cycle];
-        require(cycleInfo.isFinalized, "Cycle not finalized");
-        
-        uint256 reward = cycleInfo.stakingRewards[msg.sender];
-        require(reward > 0, "No rewards to claim");
-        
-        // 清零奖励以防止重复领取
-        cycleInfo.stakingRewards[msg.sender] = 0;
-        
-        // 转账奖励给质押者
-        (bool success, ) = payable(msg.sender).call{value: reward}("");
-        require(success, "Reward transfer failed");
-        
-        emit StakingRewardClaimed(msg.sender, reward, cycle);
+        emit EmergencyWithdraw(owner(), balance);
     }
     
     // ========== 查询函数 ==========
     
-    /// @notice 查询指定用户在指定周期的质押数量
-    /// @param staker 质押者地址
-    /// @param cycle 周期编号
-    /// @return 质押的代币数量
-    function getStakedAmount(address staker, uint256 cycle) external view returns (uint256) {
-        return cycles[cycle].stakedAmounts[staker];
-    }
-    
-    /// @notice 查询指定用户在指定周期的可领取奖励
-    /// @param staker 质押者地址
-    /// @param cycle 周期编号
-    /// @return 可领取的奖励金额
-    function getStakingReward(address staker, uint256 cycle) external view returns (uint256) {
-        return cycles[cycle].stakingRewards[staker];
-    }
-    
-    /// @notice 查询指定用户拥有的所有彩票ID
+    /// @notice 查询指定用户拥有的所有彩票
     /// @param user 用户地址
     /// @return 用户拥有的彩票ID数组
     function getUserTickets(address user) external view returns (uint256[] memory) {
-        return userTickets[user];
+        return lotteryToken.getUserTickets(user);
     }
     
     /// @notice 查询指定彩票的详细信息
     /// @param tokenId 彩票NFT ID
-    /// @return 彩票的完整信息结构体
-    function getTicketInfo(uint256 tokenId) external view returns (TicketInfo memory) {
-        return tickets[tokenId];
+    /// @return round 彩票所属周期
+    /// @return isScratched 是否已刮开
+    /// @return prizeType 奖项类型
+    /// @return prizeAmount 奖金金额
+    /// @return isPrizeClaimed 奖金是否已领取
+    /// @return randomSeed 随机种子
+    function getTicketInfo(uint256 tokenId) external view returns (
+        uint256 round,
+        bool isScratched,
+        uint256 prizeType,
+        uint256 prizeAmount,
+        bool isPrizeClaimed,
+        bytes32 randomSeed
+    ) {
+        LotteryToken.TicketInfo memory ticketInfo = lotteryToken.getTicketInfo(tokenId);
+        return (
+            ticketInfo.round,
+            ticketInfo.isScratched,
+            ticketInfo.prizeType,
+            ticketInfo.prizeAmount,
+            ticketInfo.isPrizeClaimed,
+            ticketInfo.randomSeed
+        );
     }
     
     /// @notice 查询指定周期的基本信息
-    /// @param cycle 周期编号
-    /// @return totalStaked 该周期内的总质押量
-    /// @return totalTickets 该周期内售出的彩票总数
-    /// @return totalSales 该周期内的彩票销售总收入
-    /// @return rewardPool 分配给质押者的奖励池金额
-    /// @return isFinalized 该周期是否已完成结算
-    function getCycleInfo(uint256 cycle) external view returns (
-        uint256 totalStaked,
+    /// @param round 周期编号
+    /// @return totalTickets 总彩票数
+    /// @return totalSales 总销售额
+    /// @return prizePool 奖金池
+    /// @return isEnded 是否已结束
+    function getRoundInfo(uint256 round) external view returns (
         uint256 totalTickets,
         uint256 totalSales,
-        uint256 rewardPool,
-        bool isFinalized
+        uint256 prizePool,
+        bool isEnded
     ) {
-        CycleInfo storage cycleInfo = cycles[cycle];
+        LotteryToken.RoundInfo memory roundInfo = lotteryToken.getRoundInfo(round);
         return (
-            cycleInfo.totalStaked,
-            cycleInfo.totalTickets,
-            cycleInfo.totalSales,
-            cycleInfo.rewardPool,
-            cycleInfo.isFinalized
+            roundInfo.totalTickets,
+            roundInfo.totalSales,
+            roundInfo.prizePool,
+            roundInfo.isEnded
         );
     }
     
     /// @notice 查询当前周期的剩余时间
     /// @return 当前周期的剩余秒数，如果已结束则返回0
-    function getCurrentCycleTimeLeft() external view returns (uint256) {
-        uint256 endTime = cycleStartTime + CYCLE_DURATION;
-        if (block.timestamp >= endTime) return 0;
-        return endTime - block.timestamp;
+    function getCurrentRoundTimeLeft() external view returns (uint256) {
+        return lotteryToken.getCurrentRoundTimeLeft();
     }
     
+    /// @notice 查询用户的中奖彩票信息
+    /// @param user 用户地址
+    /// @return winningTickets 中奖彩票ID数组
+    /// @return prizeAmounts 对应的奖金金额数组
+    function getUserWinningTickets(address user) external view returns (uint256[] memory winningTickets, uint256[] memory prizeAmounts) {
+        return lotteryToken.getUserWinningTickets(user);
+    }
+    
+    /// @notice 查询用户在指定周期购买的彩票数量
+    /// @param user 用户地址
+    /// @param round 周期编号
+    /// @return 用户在该周期购买的彩票数量
+    function getUserTicketCountInRound(address user, uint256 round) external view returns (uint256) {
+        return lotteryToken.getUserTicketCountInRound(user, round);
+    }
+    
+    /// @notice 查询合约的基本统计信息
+    /// @return currentRound_ 当前周期号
+    /// @return totalRevenue_ 总收入
+    /// @return totalPrizePaid_ 总发放奖金
+    /// @return systemBalance 系统总余额（包括LotteryToken合约余额）
+    function getContractStats() external view returns (
+        uint256 currentRound_,
+        uint256 totalRevenue_,
+        uint256 totalPrizePaid_,
+        uint256 systemBalance
+    ) {
+        return (
+            currentRound,
+            totalRevenue,
+            totalPrizePaid,
+            address(this).balance + address(lotteryToken).balance
+        );
+    }
+    
+    /// @notice 查询彩票价格
+    /// @return 单张彩票的价格（wei）
+    function getTicketPrice() external view returns (uint256) {
+        return lotteryToken.TICKET_PRICE();
+    }
+    
+    /// @notice 查询LotteryToken合约地址
+    /// @return LotteryToken合约的地址
+    function getLotteryTokenAddress() external view returns (address) {
+        return address(lotteryToken);
+    }
     
     /// @notice 接收ETH转账的回退函数
-    /// @dev 允许合约接收直接的ETH转账
-    receive() external payable {}
+    /// @dev 允许合约接收直接的ETH转账，用于奖金池充值
+    receive() external payable {
+        totalRevenue += msg.value;
+    }
+    
+    /// @notice 回退函数
+    /// @dev 处理无法匹配的函数调用
+    fallback() external payable {
+        totalRevenue += msg.value;
+    }
 }

@@ -3,13 +3,13 @@
 import Link from "next/link";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
-import { BanknotesIcon, GiftIcon, PresentationChartLineIcon } from "@heroicons/react/24/outline";
-import { AdminPanel } from "~~/components/pledged-lottery/AdminPanel";
+import { GiftIcon, PresentationChartLineIcon } from "@heroicons/react/24/outline";
+import { Address } from "~~/components/scaffold-eth";
 import { CycleInfo } from "~~/components/pledged-lottery/CycleInfo";
 import { LotterySection } from "~~/components/pledged-lottery/LotterySection";
 import { RewardsSection } from "~~/components/pledged-lottery/RewardsSection";
 import { StakingSection } from "~~/components/pledged-lottery/StakingSection";
-import { Address } from "~~/components/scaffold-eth";
+// import { Address } from "~~/components/scaffold-eth";
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
@@ -34,23 +34,10 @@ const Home: NextPage = () => {
           <CycleInfo />
 
           {/* Admin Panel - Only visible to admin */}
-          <AdminPanel />
+          {/* <AdminPanel /> */}
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-            {/* Staking Section */}
-            <div className="lg:col-span-1">
-              <div className="card bg-base-100 shadow-xl">
-                <div className="card-body">
-                  <div className="flex items-center gap-2 mb-4">
-                    <BanknotesIcon className="h-6 w-6 text-primary" />
-                    <h2 className="card-title text-primary">质押资金池</h2>
-                  </div>
-                  <StakingSection />
-                </div>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
             {/* Lottery Section */}
             <div className="lg:col-span-1">
               <div className="card bg-base-100 shadow-xl">
@@ -70,7 +57,7 @@ const Home: NextPage = () => {
                 <div className="card-body">
                   <div className="flex items-center gap-2 mb-4">
                     <PresentationChartLineIcon className="h-6 w-6 text-accent" />
-                    <h2 className="card-title text-accent">奖励领取</h2>
+                    <h2 className="card-title text-accent">彩票管理</h2>
                   </div>
                   <RewardsSection />
                 </div>
@@ -79,20 +66,14 @@ const Home: NextPage = () => {
           </div>
 
           {/* Information Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-            <div className="card bg-gradient-to-br from-primary/10 to-primary/20 border border-primary/20">
-              <div className="card-body text-center">
-                <BanknotesIcon className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-primary">质押赚取</h3>
-                <p className="text-sm opacity-80">质押代币到资金池，获得彩票销售收益分红</p>
-              </div>
-            </div>
-
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
             <div className="card bg-gradient-to-br from-secondary/10 to-secondary/20 border border-secondary/20">
               <div className="card-body text-center">
                 <GiftIcon className="h-12 w-12 text-secondary mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-secondary">参与彩票</h3>
-                <p className="text-sm opacity-80">购买NFT彩票，50%综合中奖率，大奖、中奖、小奖三级奖励</p>
+                <h3 className="text-lg font-bold text-secondary">NFT彩票系统</h3>
+                <p className="text-sm opacity-80">
+                  购买NFT彩票，刮刮乐开奖，50%综合中奖率，四级奖励等你来
+                </p>
               </div>
             </div>
 
@@ -100,7 +81,9 @@ const Home: NextPage = () => {
               <div className="card-body text-center">
                 <PresentationChartLineIcon className="h-12 w-12 text-accent mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-accent">7天周期</h3>
-                <p className="text-sm opacity-80">每个彩票周期7天，自动开奖，动态调整奖金保证质押收益</p>
+                <p className="text-sm opacity-80">
+                  每个彩票周期7天，自动开奖，无平台手续费，100%销售额用作奖金池
+                </p>
               </div>
             </div>
           </div>
