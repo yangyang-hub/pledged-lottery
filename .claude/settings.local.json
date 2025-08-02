@@ -2,7 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(yarn foundry:test:*)",
-      "Bash(yarn foundry:compile:*)"
+      "Bash(yarn foundry:compile:*)",
+      "Bash(forge build:*)",
+      "Bash(forge test:*)",
+      "Bash(forge inspect:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)",
+      "Bash(forge script:*)",
+      "Bash(forge clean)"
     ],
     "deny": []
   }

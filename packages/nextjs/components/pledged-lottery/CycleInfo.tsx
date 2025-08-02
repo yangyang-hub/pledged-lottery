@@ -9,25 +9,25 @@ export const CycleInfo = () => {
   const { address } = useAccount();
 
   // Read contract data
-  const { data: currentCycle } = useScaffoldReadContract({
+  const { data: currentRound } = useScaffoldReadContract({
     contractName: "PledgedLottery",
-    functionName: "currentCycle",
+    functionName: "currentRound",
   });
 
-  const { data: cycleStartTime } = useScaffoldReadContract({
+  const { data: roundStartTime } = useScaffoldReadContract({
     contractName: "PledgedLottery",
-    functionName: "cycleStartTime",
+    functionName: "roundStartTime",
   });
 
-  const { data: cycleTimeLeft } = useScaffoldReadContract({
+  const { data: roundTimeLeft } = useScaffoldReadContract({
     contractName: "PledgedLottery",
-    functionName: "getCurrentCycleTimeLeft",
+    functionName: "getCurrentRoundTimeLeft",
   });
 
-  const { data: cycleInfo } = useScaffoldReadContract({
+  const { data: roundInfo } = useScaffoldReadContract({
     contractName: "PledgedLottery",
-    functionName: "getCycleInfo",
-    args: [currentCycle],
+    functionName: "getRoundInfo",
+    args: [currentRound],
   });
 
   const formatTimeLeft = (seconds: bigint) => {
@@ -54,13 +54,13 @@ export const CycleInfo = () => {
   };
 
   const getProgressPercentage = () => {
-    if (!cycleTimeLeft) return 0;
-    const CYCLE_DURATION = 7 * 24 * 60 * 60; // 7 days in seconds
-    const elapsed = CYCLE_DURATION - Number(cycleTimeLeft);
-    return Math.max(0, Math.min(100, (elapsed / CYCLE_DURATION) * 100));
+    if (!roundTimeLeft) return 0;
+    const ROUND_DURATION = 7 * 24 * 60 * 60; // 7 days in seconds
+    const elapsed = ROUND_DURATION - Number(roundTimeLeft);
+    return Math.max(0, Math.min(100, (elapsed / ROUND_DURATION) * 100));
   };
 
-  const isActive = cycleTimeLeft && cycleTimeLeft > 0n;
+  const isActive = roundTimeLeft && roundTimeLeft > 0n;
 
   return (
     <div className="card bg-gradient-to-r from-primary/5 to-secondary/5 border border-primary/20 shadow-lg mb-8">
@@ -69,13 +69,13 @@ export const CycleInfo = () => {
           <div className="flex items-center gap-3">
             <div className="avatar placeholder">
               <div className="bg-primary text-primary-content rounded-full w-12 h-12">
-                <span className="text-xl font-bold">#{currentCycle?.toString() || "1"}</span>
+                <span className="text-xl font-bold">#{currentRound?.toString() || "1"}</span>
               </div>
             </div>
             <div>
               <h2 className="text-2xl font-bold">当前周期</h2>
               <p className="text-sm opacity-70">
-                开始时间: {cycleStartTime ? formatDateTime(cycleStartTime) : "计算中..."}
+                开始时间: {roundStartTime ? formatDateTime(roundStartTime) : "计算中..."}
               </p>
             </div>
           </div>
@@ -95,7 +95,7 @@ export const CycleInfo = () => {
               周期进度
             </span>
             <span className="text-sm">
-              {cycleTimeLeft ? formatTimeLeft(cycleTimeLeft) : "计算中..."}
+              {roundTimeLeft ? formatTimeLeft(roundTimeLeft) : "计算中..."}
             </span>
           </div>
           <div className="w-full bg-base-300 rounded-full h-3">
@@ -109,19 +109,7 @@ export const CycleInfo = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Total Staked */}
-          <div className="stat bg-base-100 rounded-lg shadow">
-            <div className="stat-figure text-primary">
-              <ChartBarIcon className="h-8 w-8" />
-            </div>
-            <div className="stat-title">总质押</div>
-            <div className="stat-value text-primary text-lg">
-              {cycleInfo?.[0] ? formatEther(cycleInfo[0]) : "0"}
-            </div>
-            <div className="stat-desc">STAKE 代币</div>
-          </div>
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Total Tickets */}
           <div className="stat bg-base-100 rounded-lg shadow">
             <div className="stat-figure text-secondary">
@@ -129,7 +117,7 @@ export const CycleInfo = () => {
             </div>
             <div className="stat-title">已售彩票</div>
             <div className="stat-value text-secondary text-lg">
-              {cycleInfo?.[1]?.toString() || "0"}
+              {roundInfo?.[0]?.toString() || "0"}
             </div>
             <div className="stat-desc">张彩票</div>
           </div>
@@ -143,7 +131,7 @@ export const CycleInfo = () => {
             </div>
             <div className="stat-title">销售额</div>
             <div className="stat-value text-accent text-lg">
-              {cycleInfo?.[2] ? formatEther(cycleInfo[2]) : "0"}
+              {roundInfo?.[1] ? formatEther(roundInfo[1]) : "0"}
             </div>
             <div className="stat-desc">ETH</div>
           </div>

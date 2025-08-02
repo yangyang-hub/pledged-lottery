@@ -7,310 +7,630 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   31337: {
     PledgedLottery: {
-      address: "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+      address: "0xa15bb66138824a1c7167f5e85b957d04dd34e468",
       abi: [
         {
-          "type": "constructor",
-          "inputs": [
-            { "name": "_stakingToken", "type": "address", "internalType": "address" },
-            { "name": "_owner", "type": "address", "internalType": "address" }
-          ],
-          "stateMutability": "nonpayable"
-        },
-        {
-          "type": "function",
-          "name": "currentCycle",
-          "inputs": [],
-          "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "cycleStartTime",
-          "inputs": [],
-          "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "stakingToken",
-          "inputs": [],
-          "outputs": [{ "name": "", "type": "address", "internalType": "contract IERC20" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "stakeTokens",
-          "inputs": [{ "name": "amount", "type": "uint256", "internalType": "uint256" }],
-          "outputs": [],
-          "stateMutability": "nonpayable"
-        },
-        {
-          "type": "function",
-          "name": "unstakeTokens",
-          "inputs": [{ "name": "amount", "type": "uint256", "internalType": "uint256" }],
-          "outputs": [],
-          "stateMutability": "nonpayable"
-        },
-        {
-          "type": "function",
-          "name": "buyTicket",
-          "inputs": [],
-          "outputs": [],
-          "stateMutability": "payable"
-        },
-        {
-          "type": "function",
-          "name": "finalizeCycle",
-          "inputs": [],
-          "outputs": [],
-          "stateMutability": "nonpayable"
-        },
-        {
-          "type": "function",
-          "name": "claimPrize",
-          "inputs": [{ "name": "tokenId", "type": "uint256", "internalType": "uint256" }],
-          "outputs": [],
-          "stateMutability": "nonpayable"
-        },
-        {
-          "type": "function",
-          "name": "claimStakingReward",
-          "inputs": [{ "name": "cycle", "type": "uint256", "internalType": "uint256" }],
-          "outputs": [],
-          "stateMutability": "nonpayable"
-        },
-        {
-          "type": "function",
-          "name": "getStakedAmount",
-          "inputs": [
-            { "name": "staker", "type": "address", "internalType": "address" },
-            { "name": "cycle", "type": "uint256", "internalType": "uint256" }
-          ],
-          "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "getStakingReward",
-          "inputs": [
-            { "name": "staker", "type": "address", "internalType": "address" },
-            { "name": "cycle", "type": "uint256", "internalType": "uint256" }
-          ],
-          "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "getUserTickets",
-          "inputs": [{ "name": "user", "type": "address", "internalType": "address" }],
-          "outputs": [{ "name": "", "type": "uint256[]", "internalType": "uint256[]" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "getTicketInfo",
-          "inputs": [{ "name": "tokenId", "type": "uint256", "internalType": "uint256" }],
-          "outputs": [
+          type: "constructor",
+          inputs: [
             {
-              "name": "",
-              "type": "tuple",
-              "internalType": "struct PledgedLottery.TicketInfo",
-              "components": [
-                { "name": "cycle", "type": "uint256", "internalType": "uint256" },
-                { "name": "owner", "type": "address", "internalType": "address" },
-                { "name": "isRedeemed", "type": "bool", "internalType": "bool" },
-                { "name": "prizeType", "type": "uint256", "internalType": "uint256" },
-                { "name": "prizeAmount", "type": "uint256", "internalType": "uint256" }
-              ]
-            }
+              name: "_owner",
+              type: "address",
+              internalType: "address",
+            },
           ],
-          "stateMutability": "view"
+          stateMutability: "nonpayable",
         },
         {
-          "type": "function",
-          "name": "getCycleInfo",
-          "inputs": [{ "name": "cycle", "type": "uint256", "internalType": "uint256" }],
-          "outputs": [
-            { "name": "totalStaked", "type": "uint256", "internalType": "uint256" },
-            { "name": "totalTickets", "type": "uint256", "internalType": "uint256" },
-            { "name": "totalSales", "type": "uint256", "internalType": "uint256" },
-            { "name": "rewardPool", "type": "uint256", "internalType": "uint256" },
-            { "name": "isFinalized", "type": "bool", "internalType": "bool" }
+          type: "fallback",
+          stateMutability: "payable",
+        },
+        {
+          type: "receive",
+          stateMutability: "payable",
+        },
+        {
+          type: "function",
+          name: "ROUND_DURATION",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
           ],
-          "stateMutability": "view"
+          stateMutability: "view",
         },
         {
-          "type": "function",
-          "name": "getCurrentCycleTimeLeft",
-          "inputs": [],
-          "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-          "stateMutability": "view"
+          type: "function",
+          name: "buyTicket",
+          inputs: [],
+          outputs: [],
+          stateMutability: "payable",
         },
         {
-          "type": "function",
-          "name": "ownerOf",
-          "inputs": [{ "name": "tokenId", "type": "uint256", "internalType": "uint256" }],
-          "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "owner",
-          "inputs": [],
-          "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "event",
-          "name": "CycleStarted",
-          "inputs": [
-            { "name": "cycle", "type": "uint256", "indexed": true, "internalType": "uint256" },
-            { "name": "startTime", "type": "uint256", "indexed": false, "internalType": "uint256" }
+          type: "function",
+          name: "claimPrize",
+          inputs: [
+            {
+              name: "tokenId",
+              type: "uint256",
+              internalType: "uint256",
+            },
           ],
-          "anonymous": false
+          outputs: [],
+          stateMutability: "nonpayable",
         },
         {
-          "type": "event",
-          "name": "TokensStaked",
-          "inputs": [
-            { "name": "staker", "type": "address", "indexed": true, "internalType": "address" },
-            { "name": "amount", "type": "uint256", "indexed": false, "internalType": "uint256" },
-            { "name": "cycle", "type": "uint256", "indexed": false, "internalType": "uint256" }
+          type: "function",
+          name: "claimPrizes",
+          inputs: [
+            {
+              name: "tokenIds",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
           ],
-          "anonymous": false
+          outputs: [],
+          stateMutability: "nonpayable",
         },
         {
-          "type": "event",
-          "name": "TicketMinted",
-          "inputs": [
-            { "name": "buyer", "type": "address", "indexed": true, "internalType": "address" },
-            { "name": "tokenId", "type": "uint256", "indexed": true, "internalType": "uint256" },
-            { "name": "cycle", "type": "uint256", "indexed": false, "internalType": "uint256" }
+          type: "function",
+          name: "currentRound",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
           ],
-          "anonymous": false
+          stateMutability: "view",
         },
         {
-          "type": "event",
-          "name": "LotteryDrawn",
-          "inputs": [
-            { "name": "cycle", "type": "uint256", "indexed": true, "internalType": "uint256" },
-            { "name": "totalWinners", "type": "uint256", "indexed": false, "internalType": "uint256" }
-          ],
-          "anonymous": false
+          type: "function",
+          name: "emergencyWithdraw",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
         },
         {
-          "type": "event",
-          "name": "PrizeClaimed",
-          "inputs": [
-            { "name": "winner", "type": "address", "indexed": true, "internalType": "address" },
-            { "name": "tokenId", "type": "uint256", "indexed": true, "internalType": "uint256" },
-            { "name": "prizeAmount", "type": "uint256", "indexed": false, "internalType": "uint256" },
-            { "name": "prizeType", "type": "uint256", "indexed": false, "internalType": "uint256" }
+          type: "function",
+          name: "finalizeRound",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "getContractStats",
+          inputs: [],
+          outputs: [
+            {
+              name: "currentRound_",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "totalRevenue_",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "totalPrizePaid_",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "systemBalance",
+              type: "uint256",
+              internalType: "uint256",
+            },
           ],
-          "anonymous": false
-        }
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getCurrentRoundTimeLeft",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getLotteryTokenAddress",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getRoundInfo",
+          inputs: [
+            {
+              name: "round",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [
+            {
+              name: "totalTickets",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "totalSales",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "prizePool",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "isEnded",
+              type: "bool",
+              internalType: "bool",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getTicketInfo",
+          inputs: [
+            {
+              name: "tokenId",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [
+            {
+              name: "round",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "isScratched",
+              type: "bool",
+              internalType: "bool",
+            },
+            {
+              name: "prizeType",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "prizeAmount",
+              type: "uint256",
+              internalType: "uint256",
+            },
+            {
+              name: "isPrizeClaimed",
+              type: "bool",
+              internalType: "bool",
+            },
+            {
+              name: "randomSeed",
+              type: "bytes32",
+              internalType: "bytes32",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getTicketPrice",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getUserTicketCountInRound",
+          inputs: [
+            {
+              name: "user",
+              type: "address",
+              internalType: "address",
+            },
+            {
+              name: "round",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getUserTickets",
+          inputs: [
+            {
+              name: "user",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getUserWinningTickets",
+          inputs: [
+            {
+              name: "user",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "winningTickets",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+            {
+              name: "prizeAmounts",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "lotteryToken",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "contract LotteryToken",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "owner",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "pause",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "paused",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "bool",
+              internalType: "bool",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "renounceOwnership",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "roundStartTime",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "scratchTicket",
+          inputs: [
+            {
+              name: "tokenId",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "totalPrizePaid",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "totalRevenue",
+          inputs: [],
+          outputs: [
+            {
+              name: "",
+              type: "uint256",
+              internalType: "uint256",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "transferOwnership",
+          inputs: [
+            {
+              name: "newOwner",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "unpause",
+          inputs: [],
+          outputs: [],
+          stateMutability: "nonpayable",
+        },
+        {
+          type: "event",
+          name: "EmergencyWithdraw",
+          inputs: [
+            {
+              name: "owner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "amount",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "OwnershipTransferred",
+          inputs: [
+            {
+              name: "previousOwner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "newOwner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "Paused",
+          inputs: [
+            {
+              name: "account",
+              type: "address",
+              indexed: false,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "PrizesClaimed",
+          inputs: [
+            {
+              name: "winner",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "round",
+              type: "uint256",
+              indexed: true,
+              internalType: "uint256",
+            },
+            {
+              name: "amount",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "ticketCount",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "RoundFinalized",
+          inputs: [
+            {
+              name: "round",
+              type: "uint256",
+              indexed: true,
+              internalType: "uint256",
+            },
+            {
+              name: "totalTickets",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "prizePool",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "TicketPurchased",
+          inputs: [
+            {
+              name: "buyer",
+              type: "address",
+              indexed: true,
+              internalType: "address",
+            },
+            {
+              name: "round",
+              type: "uint256",
+              indexed: true,
+              internalType: "uint256",
+            },
+            {
+              name: "ticketId",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+            {
+              name: "amount",
+              type: "uint256",
+              indexed: false,
+              internalType: "uint256",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "event",
+          name: "Unpaused",
+          inputs: [
+            {
+              name: "account",
+              type: "address",
+              indexed: false,
+              internalType: "address",
+            },
+          ],
+          anonymous: false,
+        },
+        {
+          type: "error",
+          name: "EnforcedPause",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "ExpectedPause",
+          inputs: [],
+        },
+        {
+          type: "error",
+          name: "OwnableInvalidOwner",
+          inputs: [
+            {
+              name: "owner",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+        },
+        {
+          type: "error",
+          name: "OwnableUnauthorizedAccount",
+          inputs: [
+            {
+              name: "account",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+        },
+        {
+          type: "error",
+          name: "ReentrancyGuardReentrantCall",
+          inputs: [],
+        },
       ],
-      "inheritedFunctions": {}
+      inheritedFunctions: {},
+      deployedOnBlock: 2,
     },
-    MockStakingToken: {
-      address: "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
-      abi: [
-        {
-          "type": "constructor",
-          "inputs": [],
-          "stateMutability": "nonpayable"
-        },
-        {
-          "type": "function",
-          "name": "name",
-          "inputs": [],
-          "outputs": [{ "name": "", "type": "string", "internalType": "string" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "symbol",
-          "inputs": [],
-          "outputs": [{ "name": "", "type": "string", "internalType": "string" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "decimals",
-          "inputs": [],
-          "outputs": [{ "name": "", "type": "uint8", "internalType": "uint8" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "totalSupply",
-          "inputs": [],
-          "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "balanceOf",
-          "inputs": [{ "name": "account", "type": "address", "internalType": "address" }],
-          "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "transfer",
-          "inputs": [
-            { "name": "to", "type": "address", "internalType": "address" },
-            { "name": "amount", "type": "uint256", "internalType": "uint256" }
-          ],
-          "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
-          "stateMutability": "nonpayable"
-        },
-        {
-          "type": "function",
-          "name": "allowance",
-          "inputs": [
-            { "name": "owner", "type": "address", "internalType": "address" },
-            { "name": "spender", "type": "address", "internalType": "address" }
-          ],
-          "outputs": [{ "name": "", "type": "uint256", "internalType": "uint256" }],
-          "stateMutability": "view"
-        },
-        {
-          "type": "function",
-          "name": "approve",
-          "inputs": [
-            { "name": "spender", "type": "address", "internalType": "address" },
-            { "name": "amount", "type": "uint256", "internalType": "uint256" }
-          ],
-          "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
-          "stateMutability": "nonpayable"
-        },
-        {
-          "type": "function",
-          "name": "transferFrom",
-          "inputs": [
-            { "name": "from", "type": "address", "internalType": "address" },
-            { "name": "to", "type": "address", "internalType": "address" },
-            { "name": "amount", "type": "uint256", "internalType": "uint256" }
-          ],
-          "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
-          "stateMutability": "nonpayable"
-        },
-        {
-          "type": "function",
-          "name": "mint",
-          "inputs": [
-            { "name": "to", "type": "address", "internalType": "address" },
-            { "name": "amount", "type": "uint256", "internalType": "uint256" }
-          ],
-          "outputs": [],
-          "stateMutability": "nonpayable"
-        }
-      ],
-      "inheritedFunctions": {}
-    }
-  }
+  },
 } as const;
 
 export default deployedContracts satisfies GenericContractsDeclaration;

@@ -15,14 +15,14 @@ export const LotterySection = () => {
   const TICKET_PRICE = "0.01";
 
   // Read contract data
-  const { data: currentCycle } = useScaffoldReadContract({
+  const { data: currentRound } = useScaffoldReadContract({
     contractName: "PledgedLottery",
-    functionName: "currentCycle",
+    functionName: "currentRound",
   });
 
-  const { data: cycleTimeLeft } = useScaffoldReadContract({
+  const { data: roundTimeLeft } = useScaffoldReadContract({
     contractName: "PledgedLottery",
-    functionName: "getCurrentCycleTimeLeft",
+    functionName: "getCurrentRoundTimeLeft",
   });
 
   const { data: userTickets } = useScaffoldReadContract({
@@ -31,10 +31,10 @@ export const LotterySection = () => {
     args: [address],
   });
 
-  const { data: cycleInfo } = useScaffoldReadContract({
+  const { data: roundInfo } = useScaffoldReadContract({
     contractName: "PledgedLottery",
-    functionName: "getCycleInfo", 
-    args: [currentCycle],
+    functionName: "getRoundInfo", 
+    args: [currentRound],
   });
 
   // Write function
@@ -72,37 +72,37 @@ export const LotterySection = () => {
     return `${minutes}分钟`;
   };
 
-  const isActive = cycleTimeLeft && cycleTimeLeft > 0n;
+  const isActive = roundTimeLeft && roundTimeLeft > 0n;
 
   return (
     <div className="space-y-6">
-      {/* Cycle Status */}
+      {/* Round Status */}
       <div className="bg-base-200 rounded-lg p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-gray-500">当前周期</span>
-          <span className="text-lg font-mono">#{currentCycle?.toString() || "1"}</span>
+          <span className="text-lg font-mono">#{currentRound?.toString() || "1"}</span>
         </div>
         <div className="flex items-center justify-between">
           <span className="text-sm text-gray-500">剩余时间</span>
           <span className={`text-lg font-mono ${isActive ? "text-primary" : "text-error"}`}>
-            {cycleTimeLeft ? formatTimeLeft(cycleTimeLeft) : "计算中..."}
+            {roundTimeLeft ? formatTimeLeft(roundTimeLeft) : "计算中..."}
           </span>
         </div>
       </div>
 
-      {/* Current Cycle Stats */}
-      {cycleInfo && (
+      {/* Current Round Stats */}
+      {roundInfo && (
         <div className="bg-gradient-to-r from-secondary/10 to-accent/10 rounded-lg p-4">
           <h4 className="font-semibold mb-3 text-secondary">本轮统计</h4>
           <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-gray-500">已售彩票</p>
-              <p className="text-xl font-mono">{cycleInfo[1]?.toString() || "0"}</p>
+              <p className="text-xl font-mono">{roundInfo[0]?.toString() || "0"}</p>
             </div>
             <div>
               <p className="text-gray-500">销售额</p>
               <p className="text-xl font-mono">
-                {cycleInfo[2] ? formatEther(cycleInfo[2]) : "0"} ETH
+                {roundInfo[1] ? formatEther(roundInfo[1]) : "0"} ETH
               </p>
             </div>
           </div>
@@ -183,9 +183,10 @@ export const LotterySection = () => {
         <div className="text-sm">
           <p className="font-medium">中奖说明:</p>
           <ul className="mt-2 space-y-1 text-xs">
-            <li>• 大奖概率: 2% (奖金池50%)</li>
-            <li>• 中奖概率: 8% (奖金池30%)</li>
-            <li>• 小奖概率: 40% (奖金池20%)</li>
+            <li>• 特等奖概率: 0.25% (奖金池40%)</li>
+            <li>• 大奖概率: 2.5% (奖金池30%)</li>
+            <li>• 中奖概率: 7.5% (奖金池20%)</li>
+            <li>• 小奖概率: 39.75% (奖金池10%)</li>
             <li>• 综合中奖率: 50%</li>
           </ul>
         </div>

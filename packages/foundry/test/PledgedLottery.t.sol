@@ -1,387 +1,263 @@
-// SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+//SPDX-License-Identifier: MIT
+pragma solidity >=0.8.0 <0.9.0;
 
-import "forge-std/Test.sol";
-import "../contracts/PledgedLottery.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
-/**
- * @notice Mock ERC20 token for testing
- */
-contract MockERC20 is ERC20 {
-    constructor() ERC20("StakingToken", "STAKE") {
-        _mint(msg.sender, 1000000 * 10**18);
-    }
-    
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
-    }
-}
+import {Test, console} from "forge-std/Test.sol";
+import {PledgedLottery} from "../contracts/PledgedLottery.sol";
+import {LotteryToken} from "../contracts/LotteryToken.sol";
 
 contract PledgedLotteryTest is Test {
-    PledgedLottery public lotteryContract;
-    MockERC20 public stakingToken;
     
-    address public owner = makeAddr("owner");
-    address public staker1 = makeAddr("staker1");
-    address public staker2 = makeAddr("staker2");
-    address public player1 = makeAddr("player1");
-    address public player2 = makeAddr("player2");
+    PledgedLottery public pledgedLottery;
+    LotteryToken public lotteryToken;
+    
+    address public owner;
+    address public user1;
+    address public user2;
+    address public user3;
     
     uint256 public constant TICKET_PRICE = 0.01 ether;
-    uint256 public constant MIN_STAKE_AMOUNT = 1000 * 10**18;
-    uint256 public constant CYCLE_DURATION = 7 days;
-
+    uint256 public constant ROUND_DURATION = 7 days;
+    
     function setUp() public {
-        vm.startPrank(owner);
+        owner = address(this);
+        user1 = makeAddr("user1");
+        user2 = makeAddr("user2");
+        user3 = makeAddr("user3");
         
-        // Deploy mock staking token
-        stakingToken = new MockERC20();
+        vm.deal(user1, 100 ether);
+        vm.deal(user2, 100 ether);
+        vm.deal(user3, 100 ether);
         
-        // Deploy lottery contract
-        lotteryContract = new PledgedLottery(owner, address(stakingToken));
+        pledgedLottery = new PledgedLottery(owner);
+        lotteryToken = LotteryToken(payable(pledgedLottery.getLotteryTokenAddress()));
         
-        // Mint tokens to test users
-        stakingToken.mint(staker1, 10000 * 10**18);
-        stakingToken.mint(staker2, 10000 * 10**18);
-        
-        // Give ETH to players
-        vm.deal(player1, 10 ether);
-        vm.deal(player2, 10 ether);
-        
-        vm.stopPrank();
+        console.log("Contract deployed successfully");
+        console.log("PledgedLottery address:", address(pledgedLottery));
+        console.log("LotteryToken address:", address(lotteryToken));
     }
-
+    
     function testInitialState() public view {
-        assertEq(lotteryContract.currentCycle(), 1);
-        assertEq(address(lotteryContract.stakingToken()), address(stakingToken));
-        assertEq(lotteryContract.owner(), owner);
+        assertEq(pledgedLottery.currentRound(), 1);
+        assertEq(pledgedLottery.getTicketPrice(), TICKET_PRICE);
+        
+        (uint256 currentRound, uint256 totalRevenue, uint256 totalPrizePaid, uint256 balance) = pledgedLottery.getContractStats();
+        assertEq(currentRound, 1);
+        assertEq(totalRevenue, 0);
+        assertEq(totalPrizePaid, 0);
+        assertEq(balance, 0);
     }
-
-    function testStakeTokens() public {
-        vm.startPrank(staker1);
-        
-        // Approve tokens
-        stakingToken.approve(address(lotteryContract), MIN_STAKE_AMOUNT);
-        
-        // Stake tokens
-        lotteryContract.stakeTokens(MIN_STAKE_AMOUNT);
-        
-        // Check staked amount
-        assertEq(lotteryContract.getStakedAmount(staker1, 1), MIN_STAKE_AMOUNT);
-        
-        vm.stopPrank();
-    }
-
-    function testStakeTokensRequiresMinimumAmount() public {
-        vm.startPrank(staker1);
-        
-        stakingToken.approve(address(lotteryContract), MIN_STAKE_AMOUNT - 1);
-        
-        vm.expectRevert("Insufficient stake amount");
-        lotteryContract.stakeTokens(MIN_STAKE_AMOUNT - 1);
-        
-        vm.stopPrank();
-    }
-
-    function testUnstakeTokens() public {
-        vm.startPrank(staker1);
-        
-        // First stake
-        stakingToken.approve(address(lotteryContract), MIN_STAKE_AMOUNT);
-        lotteryContract.stakeTokens(MIN_STAKE_AMOUNT);
-        
-        // Then unstake
-        lotteryContract.unstakeTokens(MIN_STAKE_AMOUNT / 2);
-        
-        assertEq(lotteryContract.getStakedAmount(staker1, 1), MIN_STAKE_AMOUNT / 2);
-        
-        vm.stopPrank();
-    }
-
+    
     function testBuyTicket() public {
-        vm.startPrank(player1);
+        vm.startPrank(user1);
         
-        // Buy ticket
-        lotteryContract.buyTicket{value: TICKET_PRICE}();
+        pledgedLottery.buyTicket{value: TICKET_PRICE}();
         
-        // Check ticket ownership
-        assertEq(lotteryContract.ownerOf(1), player1);
+        uint256[] memory userTickets = pledgedLottery.getUserTickets(user1);
+        assertEq(userTickets.length, 1);
+        assertEq(userTickets[0], 1);
         
-        // Check ticket info
-        PledgedLottery.TicketInfo memory ticketInfo = lotteryContract.getTicketInfo(1);
-        
-        assertEq(ticketInfo.cycle, 1);
-        assertEq(ticketInfo.owner, player1);
-        assertEq(ticketInfo.isRedeemed, false);
-        assertEq(ticketInfo.prizeType, 0);
-        assertEq(ticketInfo.prizeAmount, 0);
+        (uint256 round, bool isScratched, uint256 prizeType, uint256 prizeAmount, bool isPrizeClaimed,) = pledgedLottery.getTicketInfo(1);
+        assertEq(round, 1);
+        assertEq(isScratched, false);
+        assertEq(prizeType, 0);
+        assertEq(prizeAmount, 0);
+        assertEq(isPrizeClaimed, false);
         
         vm.stopPrank();
     }
-
-    function testBuyTicketRequiresCorrectPrice() public {
-        vm.startPrank(player1);
-        
-        vm.expectRevert("Incorrect ticket price");
-        lotteryContract.buyTicket{value: TICKET_PRICE - 1}();
-        
-        vm.expectRevert("Incorrect ticket price");
-        lotteryContract.buyTicket{value: TICKET_PRICE + 1}();
-        
-        vm.stopPrank();
-    }
-
-    function testCannotBuyTicketAfterCycleEnds() public {
-        // Fast forward past cycle duration
-        vm.warp(block.timestamp + CYCLE_DURATION + 1);
-        
-        vm.startPrank(player1);
-        
-        vm.expectRevert("Cycle ended");
-        lotteryContract.buyTicket{value: TICKET_PRICE}();
-        
-        vm.stopPrank();
-    }
-
-    function testFinalizeCycle() public {
-        // Setup: stake tokens and buy tickets
-        vm.startPrank(staker1);
-        stakingToken.approve(address(lotteryContract), MIN_STAKE_AMOUNT * 2);
-        lotteryContract.stakeTokens(MIN_STAKE_AMOUNT * 2);
-        vm.stopPrank();
-        
-        vm.startPrank(player1);
-        lotteryContract.buyTicket{value: TICKET_PRICE}();
-        lotteryContract.buyTicket{value: TICKET_PRICE}();
-        vm.stopPrank();
-        
-        // Fast forward to end of cycle
-        vm.warp(block.timestamp + CYCLE_DURATION);
-        
-        // Finalize cycle
-        vm.startPrank(owner);
-        lotteryContract.finalizeCycle();
-        vm.stopPrank();
-        
-        // Check that cycle incremented
-        assertEq(lotteryContract.currentCycle(), 2);
-        
-        // Check that previous cycle is finalized
-        (, , , , bool isFinalized) = lotteryContract.getCycleInfo(1);
-        assertTrue(isFinalized);
-    }
-
-    function testCannotFinalizeCycleEarly() public {
-        vm.startPrank(owner);
-        
-        vm.expectRevert("Cycle not ended");
-        lotteryContract.finalizeCycle();
-        
-        vm.stopPrank();
-    }
-
-    function testOnlyOwnerCanFinalizeCycle() public {
-        vm.warp(block.timestamp + CYCLE_DURATION);
-        
-        vm.startPrank(staker1);
+    
+    function testBuyTicketInvalidPrice() public {
+        vm.startPrank(user1);
         
         vm.expectRevert();
-        lotteryContract.finalizeCycle();
+        pledgedLottery.buyTicket{value: TICKET_PRICE - 1}();
+        
+        vm.expectRevert();
+        pledgedLottery.buyTicket{value: TICKET_PRICE + 1}();
         
         vm.stopPrank();
     }
-
-    function testDynamicPrizePoolAdjustment() public {
-        // Create a scenario with low sales relative to staking
-        vm.startPrank(staker1);
-        stakingToken.approve(address(lotteryContract), MIN_STAKE_AMOUNT * 10);
-        lotteryContract.stakeTokens(MIN_STAKE_AMOUNT * 10);
-        vm.stopPrank();
+    
+    function testScratchTicket() public {
+        vm.prank(user1);
+        pledgedLottery.buyTicket{value: TICKET_PRICE}();
         
-        vm.startPrank(player1);
-        lotteryContract.buyTicket{value: TICKET_PRICE}();
-        vm.stopPrank();
+        vm.startPrank(user1);
+        pledgedLottery.scratchTicket(1);
         
-        // Finalize cycle
-        vm.warp(block.timestamp + CYCLE_DURATION);
-        vm.startPrank(owner);
-        lotteryContract.finalizeCycle();
-        vm.stopPrank();
+        (, bool isScratched, uint256 prizeType,,, ) = pledgedLottery.getTicketInfo(1);
+        assertEq(isScratched, true);
+        assertTrue(prizeType >= 0 && prizeType <= 4);
         
-        // Check that reward pool exists (indicating dynamic adjustment worked)
-        (, , , uint256 rewardPool, ) = lotteryContract.getCycleInfo(1);
-        assertTrue(rewardPool > 0);
+        vm.stopPrank();
     }
-
-    function testClaimStakingReward() public {
-        // Setup staking and tickets
-        vm.startPrank(staker1);
-        stakingToken.approve(address(lotteryContract), MIN_STAKE_AMOUNT);
-        lotteryContract.stakeTokens(MIN_STAKE_AMOUNT);
-        vm.stopPrank();
+    
+    function testScratchTicketPermissions() public {
+        vm.prank(user1);
+        pledgedLottery.buyTicket{value: TICKET_PRICE}();
         
-        vm.startPrank(player1);
-        lotteryContract.buyTicket{value: TICKET_PRICE}();
-        vm.stopPrank();
+        vm.prank(user2);
+        vm.expectRevert();
+        pledgedLottery.scratchTicket(1);
         
-        // Finalize cycle
-        vm.warp(block.timestamp + CYCLE_DURATION);
-        vm.startPrank(owner);
-        lotteryContract.finalizeCycle();
-        vm.stopPrank();
+        vm.prank(user1);
+        pledgedLottery.scratchTicket(1);
         
-        // Claim staking reward
-        uint256 initialBalance = staker1.balance;
-        uint256 expectedReward = lotteryContract.getStakingReward(staker1, 1);
+        vm.prank(user1);
+        vm.expectRevert();
+        pledgedLottery.scratchTicket(1);
+    }
+    
+    function testClaimPrize() public {
+        uint256 ticketCount = 20;
+        uint256[] memory ticketIds = new uint256[](ticketCount);
         
-        if (expectedReward > 0) {
-            vm.startPrank(staker1);
-            lotteryContract.claimStakingReward(1);
-            vm.stopPrank();
-            
-            assertEq(staker1.balance, initialBalance + expectedReward);
-            assertEq(lotteryContract.getStakingReward(staker1, 1), 0);
+        vm.startPrank(user1);
+        
+        for (uint256 i = 0; i < ticketCount; i++) {
+            pledgedLottery.buyTicket{value: TICKET_PRICE}();
+            ticketIds[i] = i + 1;
         }
-    }
-
-    function testCannotClaimStakingRewardForActiveCycle() public {
-        vm.startPrank(staker1);
         
-        vm.expectRevert("Cycle not ended");
-        lotteryContract.claimStakingReward(1);
+        for (uint256 i = 0; i < ticketCount; i++) {
+            pledgedLottery.scratchTicket(ticketIds[i]);
+        }
         
-        vm.stopPrank();
-    }
-
-    function testGetUserTickets() public {
-        vm.startPrank(player1);
+        uint256 initialBalance = user1.balance;
+        bool foundWinner = false;
         
-        lotteryContract.buyTicket{value: TICKET_PRICE}();
-        lotteryContract.buyTicket{value: TICKET_PRICE}();
-        
-        uint256[] memory tickets = lotteryContract.getUserTickets(player1);
-        assertEq(tickets.length, 2);
-        assertEq(tickets[0], 1);
-        assertEq(tickets[1], 2);
-        
-        vm.stopPrank();
-    }
-
-    function testGetCycleInfo() public {
-        vm.startPrank(staker1);
-        stakingToken.approve(address(lotteryContract), MIN_STAKE_AMOUNT);
-        lotteryContract.stakeTokens(MIN_STAKE_AMOUNT);
-        vm.stopPrank();
-        
-        vm.startPrank(player1);
-        lotteryContract.buyTicket{value: TICKET_PRICE}();
-        vm.stopPrank();
-        
-        (uint256 totalStaked, uint256 totalTickets, uint256 totalSales, uint256 rewardPool, bool isFinalized) = 
-            lotteryContract.getCycleInfo(1);
+        for (uint256 i = 0; i < ticketCount; i++) {
+            (, , uint256 prizeType, uint256 prizeAmount, bool isPrizeClaimed, ) = pledgedLottery.getTicketInfo(ticketIds[i]);
             
-        assertEq(totalStaked, MIN_STAKE_AMOUNT);
+            if (prizeType > 0 && !isPrizeClaimed) {
+                foundWinner = true;
+                pledgedLottery.claimPrize(ticketIds[i]);
+                
+                assertGt(user1.balance, initialBalance);
+                
+                (, , , , bool newIsPrizeClaimed, ) = pledgedLottery.getTicketInfo(ticketIds[i]);
+                assertEq(newIsPrizeClaimed, true);
+                
+                break;
+            }
+        }
+        
+        assertTrue(foundWinner);
+        
+        vm.stopPrank();
+    }
+    
+    function testRoundManagement() public {
+        assertEq(pledgedLottery.currentRound(), 1);
+        assertGt(pledgedLottery.getCurrentRoundTimeLeft(), 0);
+        
+        vm.prank(user1);
+        pledgedLottery.buyTicket{value: TICKET_PRICE}();
+        
+        (uint256 totalTickets, uint256 totalSales, uint256 prizePool, bool isEnded) = pledgedLottery.getRoundInfo(1);
         assertEq(totalTickets, 1);
         assertEq(totalSales, TICKET_PRICE);
-        assertEq(rewardPool, 0); // Not finalized yet
-        assertEq(isFinalized, false);
+        assertEq(isEnded, false);
+        
+        vm.warp(block.timestamp + ROUND_DURATION + 1);
+        
+        pledgedLottery.finalizeRound();
+        
+        assertEq(pledgedLottery.currentRound(), 2);
+        assertEq(pledgedLottery.getCurrentRoundTimeLeft(), ROUND_DURATION);
+        
+        (, , , bool isEnded2) = pledgedLottery.getRoundInfo(1);
+        assertEq(isEnded2, true);
     }
-
-    function testGetCurrentCycleTimeLeft() public {
-        uint256 timeLeft = lotteryContract.getCurrentCycleTimeLeft();
-        assertLe(timeLeft, CYCLE_DURATION);
-        assertGt(timeLeft, 0);
-        
-        // Fast forward to end
-        vm.warp(block.timestamp + CYCLE_DURATION);
-        timeLeft = lotteryContract.getCurrentCycleTimeLeft();
-        assertEq(timeLeft, 0);
-    }
-
-    function testEmergencyWithdraw() public {
-        // Add some ETH to contract
-        vm.deal(address(lotteryContract), 1 ether);
-        
-        uint256 initialBalance = owner.balance;
-        
-        vm.startPrank(owner);
-        lotteryContract.emergencyWithdraw();
-        vm.stopPrank();
-        
-        assertEq(owner.balance, initialBalance + 1 ether);
-        assertEq(address(lotteryContract).balance, 0);
-    }
-
-    function testOnlyOwnerCanEmergencyWithdraw() public {
-        vm.startPrank(staker1);
-        
+    
+    function testCannotEndRoundEarly() public {
         vm.expectRevert();
-        lotteryContract.emergencyWithdraw();
-        
-        vm.stopPrank();
+        pledgedLottery.finalizeRound();
     }
-
-    function testReceiveFunction() public {
-        vm.deal(player1, 1 ether);
+    
+    function testCannotBuyTicketAfterRoundEnd() public {
+        vm.warp(block.timestamp + ROUND_DURATION + 1);
         
-        vm.startPrank(player1);
-        (bool success, ) = address(lotteryContract).call{value: 0.5 ether}("");
-        assertTrue(success);
-        vm.stopPrank();
-        
-        assertEq(address(lotteryContract).balance, 0.5 ether);
+        vm.prank(user1);
+        vm.expectRevert();
+        pledgedLottery.buyTicket{value: TICKET_PRICE}();
     }
-
-    function testLotteryIntegration() public {
-        // Complete integration test
+    
+    function testPauseFunctionality() public {
+        pledgedLottery.pause();
         
-        // 1. Multiple stakers stake tokens
-        vm.startPrank(staker1);
-        stakingToken.approve(address(lotteryContract), MIN_STAKE_AMOUNT * 2);
-        lotteryContract.stakeTokens(MIN_STAKE_AMOUNT * 2);
-        vm.stopPrank();
+        vm.prank(user1);
+        vm.expectRevert();
+        pledgedLottery.buyTicket{value: TICKET_PRICE}();
         
-        vm.startPrank(staker2);
-        stakingToken.approve(address(lotteryContract), MIN_STAKE_AMOUNT);
-        lotteryContract.stakeTokens(MIN_STAKE_AMOUNT);
-        vm.stopPrank();
+        pledgedLottery.unpause();
         
-        // 2. Multiple players buy tickets
-        vm.startPrank(player1);
-        for(uint i = 0; i < 5; i++) {
-            lotteryContract.buyTicket{value: TICKET_PRICE}();
-        }
-        vm.stopPrank();
+        vm.prank(user1);
+        pledgedLottery.buyTicket{value: TICKET_PRICE}();
+    }
+    
+    function testPrizeDistribution() public {
+        uint256 totalTickets = 100;
+        uint256[] memory prizeTypeCounts = new uint256[](5);
         
-        vm.startPrank(player2);
-        for(uint i = 0; i < 3; i++) {
-            lotteryContract.buyTicket{value: TICKET_PRICE}();
-        }
-        vm.stopPrank();
+        vm.startPrank(user1);
         
-        // 3. Finalize cycle
-        vm.warp(block.timestamp + CYCLE_DURATION);
-        vm.startPrank(owner);
-        lotteryContract.finalizeCycle();
-        vm.stopPrank();
-        
-        // 4. Check results
-        (uint256 totalStaked, uint256 totalTickets, uint256 totalSales, uint256 rewardPool, bool isFinalized) = 
-            lotteryContract.getCycleInfo(1);
+        for (uint256 i = 0; i < totalTickets; i++) {
+            pledgedLottery.buyTicket{value: TICKET_PRICE}();
+            pledgedLottery.scratchTicket(i + 1);
             
-        assertEq(totalStaked, MIN_STAKE_AMOUNT * 3);
-        assertEq(totalTickets, 8);
-        assertEq(totalSales, TICKET_PRICE * 8);
-        assertGt(rewardPool, 0);
-        assertTrue(isFinalized);
+            (, , uint256 prizeType, , , ) = pledgedLottery.getTicketInfo(i + 1);
+            prizeTypeCounts[prizeType]++;
+        }
         
-        // 5. Verify staking rewards are distributed
-        uint256 staker1Reward = lotteryContract.getStakingReward(staker1, 1);
-        uint256 staker2Reward = lotteryContract.getStakingReward(staker2, 1);
+        vm.stopPrank();
         
-        // Staker1 should get 2/3 of rewards (staked 2x MIN_STAKE_AMOUNT vs staker2's 1x)
-        assertGt(staker1Reward, staker2Reward);
-        assertApproxEqRel(staker1Reward, staker2Reward * 2, 0.01e18); // 1% tolerance
+        uint256 totalWinners = prizeTypeCounts[1] + prizeTypeCounts[2] + prizeTypeCounts[3] + prizeTypeCounts[4];
+        uint256 actualWinRate = (totalWinners * 10000) / totalTickets;
+        
+        console.log("Total tickets:", totalTickets);
+        console.log("No prize:", prizeTypeCounts[0]);
+        console.log("Small prize:", prizeTypeCounts[1]);
+        console.log("Medium prize:", prizeTypeCounts[2]);
+        console.log("Big prize:", prizeTypeCounts[3]);
+        console.log("Super prize:", prizeTypeCounts[4]);
+        console.log("Total winners:", totalWinners);
+        console.log("Actual win rate:", actualWinRate, "basis points");
+        
+        assertTrue(actualWinRate >= 3000 && actualWinRate <= 7000, "Win rate should be around 50%");
+    }
+    
+    function testQueryFunctions() public {
+        vm.startPrank(user1);
+        pledgedLottery.buyTicket{value: TICKET_PRICE}();
+        pledgedLottery.buyTicket{value: TICKET_PRICE}();
+        vm.stopPrank();
+        
+        vm.startPrank(user2);
+        pledgedLottery.buyTicket{value: TICKET_PRICE}();
+        vm.stopPrank();
+        
+        uint256[] memory user1Tickets = pledgedLottery.getUserTickets(user1);
+        uint256[] memory user2Tickets = pledgedLottery.getUserTickets(user2);
+        
+        assertEq(user1Tickets.length, 2);
+        assertEq(user2Tickets.length, 1);
+        
+        assertEq(pledgedLottery.getUserTicketCountInRound(user1, 1), 2);
+        assertEq(pledgedLottery.getUserTicketCountInRound(user2, 1), 1);
+        
+        (uint256 currentRound, uint256 totalRevenue, , uint256 contractBalance) = pledgedLottery.getContractStats();
+        assertEq(currentRound, 1);
+        assertEq(totalRevenue, 3 * TICKET_PRICE);
+        assertEq(contractBalance, 3 * TICKET_PRICE);
+    }
+    
+    function testReceiveEther() public {
+        uint256 initialRevenue = pledgedLottery.totalRevenue();
+        
+        (bool success,) = payable(address(pledgedLottery)).call{value: 1 ether}("");
+        assertTrue(success);
+        
+        assertEq(pledgedLottery.totalRevenue(), initialRevenue + 1 ether);
     }
 }
