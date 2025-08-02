@@ -21,7 +21,7 @@ const Home: NextPage = () => {
           <h1 className="text-center mb-8">
             <span className="block text-2xl mb-2">欢迎来到</span>
             <span className="block text-4xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              质押彩票系统
+              Monad刮刮乐
             </span>
           </h1>
 
