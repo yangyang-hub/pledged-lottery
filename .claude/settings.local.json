@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(yarn foundry:test:*)",
+      "Bash(yarn foundry:compile:*)"
+    ],
+    "deny": []
+  }
+}
