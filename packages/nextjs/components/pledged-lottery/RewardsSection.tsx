@@ -77,7 +77,7 @@ export const RewardsSection = () => {
     }
   };
 
-
+ 
 
   // Get ticket details for each ticket
   const useTicketInfo = (tokenId: bigint) => {
@@ -167,7 +167,7 @@ const TicketCard = ({ tokenId }: { tokenId: bigint }) => {
   const { writeContractAsync: claimPrize } = useScaffoldWriteContract("PledgedLottery");
 
   if (!ticketInfo) return null;
-
+  
 
   const getPrizeTypeLabel = (prizeType: number) => {
     switch (prizeType) {
@@ -180,7 +180,7 @@ const TicketCard = ({ tokenId }: { tokenId: bigint }) => {
   };
 
   const [round, isScratched, prizeType, prizeAmount, isPrizeClaimed] = ticketInfo;
-
+ 
   const prizeInfo = getPrizeTypeLabel(Number(prizeType));
   const IconComponent = prizeInfo.icon;
 
@@ -219,8 +219,8 @@ const TicketCard = ({ tokenId }: { tokenId: bigint }) => {
           <div className="flex items-center gap-2">
             <IconComponent className={`h-5 w-5 ${prizeInfo.color}`} />
             <div>
-              <p style={{ margin: 0 }} className="font-mono text-sm">#{tokenId.toString()}</p>
-              <p style={{ margin: 0 }} className="text-xs text-gray-500">第 {round.toString()} 轮</p>
+              <p className="font-mono text-sm">#{tokenId.toString()}</p>
+              <p className="text-xs text-gray-500">第 {round.toString()} 轮</p>
             </div>
           </div>
 
