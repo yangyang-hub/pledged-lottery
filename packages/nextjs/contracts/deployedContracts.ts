@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   10143: {
     PledgedLottery: {
-      address: "0x802548316ae3e7A2f662198441a9e27947F5C813",
+      address: "0xc2af8a364bfb3e41bd23e397ab030f71e664e98f",
       abi: [
         {
           type: "constructor",
@@ -27,19 +27,6 @@ const deployedContracts = {
         {
           type: "receive",
           stateMutability: "payable",
-        },
-        {
-          type: "function",
-          name: "ROUND_DURATION",
-          inputs: [],
-          outputs: [
-            {
-              name: "",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
         },
         {
           type: "function",
@@ -76,27 +63,7 @@ const deployedContracts = {
         },
         {
           type: "function",
-          name: "currentRound",
-          inputs: [],
-          outputs: [
-            {
-              name: "",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
-        },
-        {
-          type: "function",
           name: "emergencyWithdraw",
-          inputs: [],
-          outputs: [],
-          stateMutability: "nonpayable",
-        },
-        {
-          type: "function",
-          name: "finalizeRound",
           inputs: [],
           outputs: [],
           stateMutability: "nonpayable",
@@ -106,11 +73,6 @@ const deployedContracts = {
           name: "getContractStats",
           inputs: [],
           outputs: [
-            {
-              name: "currentRound_",
-              type: "uint256",
-              internalType: "uint256",
-            },
             {
               name: "totalRevenue_",
               type: "uint256",
@@ -123,19 +85,6 @@ const deployedContracts = {
             },
             {
               name: "systemBalance",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
-        },
-        {
-          type: "function",
-          name: "getCurrentRoundTimeLeft",
-          inputs: [],
-          outputs: [
-            {
-              name: "",
               type: "uint256",
               internalType: "uint256",
             },
@@ -157,40 +106,6 @@ const deployedContracts = {
         },
         {
           type: "function",
-          name: "getRoundInfo",
-          inputs: [
-            {
-              name: "round",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          outputs: [
-            {
-              name: "totalTickets",
-              type: "uint256",
-              internalType: "uint256",
-            },
-            {
-              name: "totalSales",
-              type: "uint256",
-              internalType: "uint256",
-            },
-            {
-              name: "prizePool",
-              type: "uint256",
-              internalType: "uint256",
-            },
-            {
-              name: "isEnded",
-              type: "bool",
-              internalType: "bool",
-            },
-          ],
-          stateMutability: "view",
-        },
-        {
-          type: "function",
           name: "getTicketInfo",
           inputs: [
             {
@@ -200,11 +115,6 @@ const deployedContracts = {
             },
           ],
           outputs: [
-            {
-              name: "round",
-              type: "uint256",
-              internalType: "uint256",
-            },
             {
               name: "isScratched",
               type: "bool",
@@ -237,30 +147,6 @@ const deployedContracts = {
           type: "function",
           name: "getTicketPrice",
           inputs: [],
-          outputs: [
-            {
-              name: "",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
-        },
-        {
-          type: "function",
-          name: "getUserTicketCountInRound",
-          inputs: [
-            {
-              name: "user",
-              type: "address",
-              internalType: "address",
-            },
-            {
-              name: "round",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
           outputs: [
             {
               name: "",
@@ -365,19 +251,6 @@ const deployedContracts = {
           inputs: [],
           outputs: [],
           stateMutability: "nonpayable",
-        },
-        {
-          type: "function",
-          name: "roundStartTime",
-          inputs: [],
-          outputs: [
-            {
-              name: "",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
         },
         {
           type: "function",
@@ -500,12 +373,6 @@ const deployedContracts = {
               internalType: "address",
             },
             {
-              name: "round",
-              type: "uint256",
-              indexed: true,
-              internalType: "uint256",
-            },
-            {
               name: "amount",
               type: "uint256",
               indexed: false,
@@ -522,31 +389,6 @@ const deployedContracts = {
         },
         {
           type: "event",
-          name: "RoundFinalized",
-          inputs: [
-            {
-              name: "round",
-              type: "uint256",
-              indexed: true,
-              internalType: "uint256",
-            },
-            {
-              name: "totalTickets",
-              type: "uint256",
-              indexed: false,
-              internalType: "uint256",
-            },
-            {
-              name: "prizePool",
-              type: "uint256",
-              indexed: false,
-              internalType: "uint256",
-            },
-          ],
-          anonymous: false,
-        },
-        {
-          type: "event",
           name: "TicketPurchased",
           inputs: [
             {
@@ -554,12 +396,6 @@ const deployedContracts = {
               type: "address",
               indexed: true,
               internalType: "address",
-            },
-            {
-              name: "round",
-              type: "uint256",
-              indexed: true,
-              internalType: "uint256",
             },
             {
               name: "ticketId",
@@ -628,12 +464,12 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 28928648,
+      deployedOnBlock: 38554553,
     },
   },
   31337: {
     PledgedLottery: {
-      address: "0xb19b36b1456e65e3a6d514d3f715f204bd59f431",
+      address: "0x0c8e79f3534b00d9a3d4a856b665bf4ebc22f2ba",
       abi: [
         {
           type: "constructor",
@@ -653,19 +489,6 @@ const deployedContracts = {
         {
           type: "receive",
           stateMutability: "payable",
-        },
-        {
-          type: "function",
-          name: "ROUND_DURATION",
-          inputs: [],
-          outputs: [
-            {
-              name: "",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
         },
         {
           type: "function",
@@ -702,27 +525,7 @@ const deployedContracts = {
         },
         {
           type: "function",
-          name: "currentRound",
-          inputs: [],
-          outputs: [
-            {
-              name: "",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
-        },
-        {
-          type: "function",
           name: "emergencyWithdraw",
-          inputs: [],
-          outputs: [],
-          stateMutability: "nonpayable",
-        },
-        {
-          type: "function",
-          name: "finalizeRound",
           inputs: [],
           outputs: [],
           stateMutability: "nonpayable",
@@ -732,11 +535,6 @@ const deployedContracts = {
           name: "getContractStats",
           inputs: [],
           outputs: [
-            {
-              name: "currentRound_",
-              type: "uint256",
-              internalType: "uint256",
-            },
             {
               name: "totalRevenue_",
               type: "uint256",
@@ -749,19 +547,6 @@ const deployedContracts = {
             },
             {
               name: "systemBalance",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
-        },
-        {
-          type: "function",
-          name: "getCurrentRoundTimeLeft",
-          inputs: [],
-          outputs: [
-            {
-              name: "",
               type: "uint256",
               internalType: "uint256",
             },
@@ -783,40 +568,6 @@ const deployedContracts = {
         },
         {
           type: "function",
-          name: "getRoundInfo",
-          inputs: [
-            {
-              name: "round",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          outputs: [
-            {
-              name: "totalTickets",
-              type: "uint256",
-              internalType: "uint256",
-            },
-            {
-              name: "totalSales",
-              type: "uint256",
-              internalType: "uint256",
-            },
-            {
-              name: "prizePool",
-              type: "uint256",
-              internalType: "uint256",
-            },
-            {
-              name: "isEnded",
-              type: "bool",
-              internalType: "bool",
-            },
-          ],
-          stateMutability: "view",
-        },
-        {
-          type: "function",
           name: "getTicketInfo",
           inputs: [
             {
@@ -826,11 +577,6 @@ const deployedContracts = {
             },
           ],
           outputs: [
-            {
-              name: "round",
-              type: "uint256",
-              internalType: "uint256",
-            },
             {
               name: "isScratched",
               type: "bool",
@@ -863,30 +609,6 @@ const deployedContracts = {
           type: "function",
           name: "getTicketPrice",
           inputs: [],
-          outputs: [
-            {
-              name: "",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
-        },
-        {
-          type: "function",
-          name: "getUserTicketCountInRound",
-          inputs: [
-            {
-              name: "user",
-              type: "address",
-              internalType: "address",
-            },
-            {
-              name: "round",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
           outputs: [
             {
               name: "",
@@ -991,19 +713,6 @@ const deployedContracts = {
           inputs: [],
           outputs: [],
           stateMutability: "nonpayable",
-        },
-        {
-          type: "function",
-          name: "roundStartTime",
-          inputs: [],
-          outputs: [
-            {
-              name: "",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
-          stateMutability: "view",
         },
         {
           type: "function",
@@ -1126,12 +835,6 @@ const deployedContracts = {
               internalType: "address",
             },
             {
-              name: "round",
-              type: "uint256",
-              indexed: true,
-              internalType: "uint256",
-            },
-            {
               name: "amount",
               type: "uint256",
               indexed: false,
@@ -1148,31 +851,6 @@ const deployedContracts = {
         },
         {
           type: "event",
-          name: "RoundFinalized",
-          inputs: [
-            {
-              name: "round",
-              type: "uint256",
-              indexed: true,
-              internalType: "uint256",
-            },
-            {
-              name: "totalTickets",
-              type: "uint256",
-              indexed: false,
-              internalType: "uint256",
-            },
-            {
-              name: "prizePool",
-              type: "uint256",
-              indexed: false,
-              internalType: "uint256",
-            },
-          ],
-          anonymous: false,
-        },
-        {
-          type: "event",
           name: "TicketPurchased",
           inputs: [
             {
@@ -1180,12 +858,6 @@ const deployedContracts = {
               type: "address",
               indexed: true,
               internalType: "address",
-            },
-            {
-              name: "round",
-              type: "uint256",
-              indexed: true,
-              internalType: "uint256",
             },
             {
               name: "ticketId",
@@ -1254,7 +926,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 37,
+      deployedOnBlock: 23,
     },
   },
 } as const;

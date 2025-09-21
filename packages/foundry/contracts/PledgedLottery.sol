@@ -9,8 +9,8 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 
 /**
  * @title PledgedLottery
- * @dev 彩票系统主合约 - 管理彩票周期、奖金池和奖金发放
- * 基于NFT的彩票系统，支持7天周期、手动刮刮乐开奖、50%综合中奖率
+ * @dev 彩票系统主合约 - 管理彩票、奖金池和奖金发放
+ * 基于NFT的彩票系统，支持手动刮刮乐开奖、50%综合中奖率
  * 无平台手续费，所有销售收入用作奖金池
  */
 contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
@@ -18,14 +18,6 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
     /// @notice 彩票NFT合约地址
     LotteryToken public immutable lotteryToken;
     
-    /// @notice 每个彩票周期的持续时间（7天）
-    uint256 public constant ROUND_DURATION = 7 days;
-    
-    /// @notice 当前活跃的彩票周期编号
-    uint256 public currentRound;
-    
-    /// @notice 当前周期的开始时间戳
-    uint256 public roundStartTime;
     
     /// @notice 合约的总收入（用于统计）
     uint256 public totalRevenue;
@@ -43,23 +35,15 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
     
     /// @notice 彩票购买统计事件
     /// @param buyer 购买者地址
-    /// @param round 购买周期
     /// @param ticketId 彩票ID
     /// @param amount 支付金额
-    event TicketPurchased(address indexed buyer, uint256 indexed round, uint256 ticketId, uint256 amount);
-    
-    /// @notice 周期结束事件
-    /// @param round 结束的周期号
-    /// @param totalTickets 该周期总彩票数
-    /// @param prizePool 奖金池金额
-    event RoundFinalized(uint256 indexed round, uint256 totalTickets, uint256 prizePool);
-    
+    event TicketPurchased(address indexed buyer, uint256 ticketId, uint256 amount);
+
     /// @notice 奖金领取事件
     /// @param winner 中奖者地址
-    /// @param round 中奖周期
     /// @param amount 奖金金额
     /// @param ticketCount 中奖彩票数量
-    event PrizesClaimed(address indexed winner, uint256 indexed round, uint256 amount, uint256 ticketCount);
+    event PrizesClaimed(address indexed winner, uint256 amount, uint256 ticketCount);
     
     /// @notice 紧急提取事件
     /// @param owner 合约所有者
@@ -70,26 +54,19 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
     /// @param _owner 合约所有者地址
     constructor(address _owner) Ownable(_owner) {
         lotteryToken = new LotteryToken(_owner, address(this));
-        currentRound = 1;
-        roundStartTime = block.timestamp;
     }
     
-    /// @notice 限制只能在活跃周期内执行的操作
-    modifier onlyActiveRound() {
-        require(block.timestamp < roundStartTime + ROUND_DURATION, unicode"当前周期已结束");
-        _;
-    }
     
     /// @notice 购买彩票
     /// @dev 代理调用LotteryToken合约的buyTicketFor函数
-    function buyTicket() external payable onlyActiveRound whenNotPaused nonReentrant {
+    function buyTicket() external payable whenNotPaused nonReentrant {
         // 记录收入
         totalRevenue += msg.value;
         
         // 将ETH转发给LotteryToken合约并调用buyTicketFor
         lotteryToken.buyTicketFor{value: msg.value}(msg.sender);
         
-        emit TicketPurchased(msg.sender, currentRound, lotteryToken.totalSupply(), msg.value);
+        emit TicketPurchased(msg.sender, lotteryToken.totalSupply(), msg.value);
     }
     
     /// @notice 刮开彩票（刮刮乐机制）
@@ -152,33 +129,9 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
         // 更新统计
         totalPrizePaid += totalAmount;
         
-        // 获取当前周期（从第一张有效彩票获取）
-        uint256 round = currentRound;
-        if (tokenIds.length > 0) {
-            LotteryToken.TicketInfo memory firstTicketInfo = lotteryToken.getTicketInfo(tokenIds[0]);
-            round = firstTicketInfo.round;
-        }
-        
-        emit PrizesClaimed(msg.sender, round, totalAmount, validTickets);
+        emit PrizesClaimed(msg.sender, totalAmount, validTickets);
     }
     
-    /// @notice 结束当前周期并开始新周期
-    /// @dev 只有合约所有者可以调用，必须在周期结束后才能执行
-    function finalizeRound() external onlyOwner {
-        require(block.timestamp >= roundStartTime + ROUND_DURATION, unicode"当前周期尚未结束");
-        
-        // 调用LotteryToken合约结束当前周期
-        lotteryToken.endCurrentRound();
-        
-        // 获取当前周期信息用于事件
-        LotteryToken.RoundInfo memory roundInfo = lotteryToken.getRoundInfo(currentRound);
-        
-        emit RoundFinalized(currentRound, roundInfo.totalTickets, roundInfo.prizePool);
-        
-        // 更新本合约的周期信息
-        currentRound++;
-        roundStartTime = block.timestamp;
-    }
     
     // ========== 管理员函数 ==========
     
@@ -215,14 +168,12 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
     
     /// @notice 查询指定彩票的详细信息
     /// @param tokenId 彩票NFT ID
-    /// @return round 彩票所属周期
     /// @return isScratched 是否已刮开
     /// @return prizeType 奖项类型
     /// @return prizeAmount 奖金金额
     /// @return isPrizeClaimed 奖金是否已领取
     /// @return randomSeed 随机种子
     function getTicketInfo(uint256 tokenId) external view returns (
-        uint256 round,
         bool isScratched,
         uint256 prizeType,
         uint256 prizeAmount,
@@ -231,7 +182,6 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
     ) {
         LotteryToken.TicketInfo memory ticketInfo = lotteryToken.getTicketInfo(tokenId);
         return (
-            ticketInfo.round,
             ticketInfo.isScratched,
             ticketInfo.prizeType,
             ticketInfo.prizeAmount,
@@ -240,32 +190,7 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
         );
     }
     
-    /// @notice 查询指定周期的基本信息
-    /// @param round 周期编号
-    /// @return totalTickets 总彩票数
-    /// @return totalSales 总销售额
-    /// @return prizePool 奖金池
-    /// @return isEnded 是否已结束
-    function getRoundInfo(uint256 round) external view returns (
-        uint256 totalTickets,
-        uint256 totalSales,
-        uint256 prizePool,
-        bool isEnded
-    ) {
-        LotteryToken.RoundInfo memory roundInfo = lotteryToken.getRoundInfo(round);
-        return (
-            roundInfo.totalTickets,
-            roundInfo.totalSales,
-            roundInfo.prizePool,
-            roundInfo.isEnded
-        );
-    }
     
-    /// @notice 查询当前周期的剩余时间
-    /// @return 当前周期的剩余秒数，如果已结束则返回0
-    function getCurrentRoundTimeLeft() external view returns (uint256) {
-        return lotteryToken.getCurrentRoundTimeLeft();
-    }
     
     /// @notice 查询用户的中奖彩票信息
     /// @param user 用户地址
@@ -275,27 +200,17 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
         return lotteryToken.getUserWinningTickets(user);
     }
     
-    /// @notice 查询用户在指定周期购买的彩票数量
-    /// @param user 用户地址
-    /// @param round 周期编号
-    /// @return 用户在该周期购买的彩票数量
-    function getUserTicketCountInRound(address user, uint256 round) external view returns (uint256) {
-        return lotteryToken.getUserTicketCountInRound(user, round);
-    }
     
     /// @notice 查询合约的基本统计信息
-    /// @return currentRound_ 当前周期号
     /// @return totalRevenue_ 总收入
     /// @return totalPrizePaid_ 总发放奖金
     /// @return systemBalance 系统总余额（包括LotteryToken合约余额）
     function getContractStats() external view returns (
-        uint256 currentRound_,
         uint256 totalRevenue_,
         uint256 totalPrizePaid_,
         uint256 systemBalance
     ) {
         return (
-            currentRound,
             totalRevenue,
             totalPrizePaid,
             address(this).balance + address(lotteryToken).balance

@@ -19,15 +19,12 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
     
     /// @notice 彩票NFT的ID计数器
     uint256 private _tokenIdCounter = 1;
-    
-    /// @notice 当前活跃的彩票周期编号
-    uint256 public currentRound;
-    
-    /// @notice 当前周期的开始时间戳
-    uint256 public roundStartTime;
-    
-    /// @notice 每个彩票周期的持续时间（7天）
-    uint256 public constant ROUND_DURATION = 7 days;
+
+    /// @notice 系统总的彩票销售收入
+    uint256 public totalSales;
+
+    /// @notice 系统已发放的奖金总额
+    uint256 public totalPaidPrizes;
     
     /// @notice 小奖中奖概率 (30% * 总中奖率50% = 15%)
     uint256 public constant SMALL_PRIZE_RATE = 1500;
@@ -46,8 +43,6 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
     
     /// @notice 彩票信息结构体
     struct TicketInfo {
-        /// @notice 彩票所属的周期编号
-        uint256 round;
         /// @notice 彩票是否已被刮开（开奖）
         bool isScratched;
         /// @notice 奖项类型：0=未中奖, 1=小奖, 2=中奖, 3=大奖, 4=特等奖
@@ -60,53 +55,25 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
         bytes32 randomSeed;
     }
     
-    /// @notice 每个周期的信息结构体
-    struct RoundInfo {
-        /// @notice 该周期内售出的彩票总数
-        uint256 totalTickets;
-        /// @notice 该周期内彩票销售总收入（ETH）
-        uint256 totalSales;
-        /// @notice 该周期的奖金池总额
-        uint256 prizePool;
-        /// @notice 该周期是否已结束
-        bool isEnded;
-        /// @notice 已发放的奖金总额
-        uint256 totalPaidPrizes;
-    }
     
     /// @notice 彩票ID到彩票信息的映射
     mapping(uint256 => TicketInfo) public tickets;
-    
-    /// @notice 每个周期的详细信息映射
-    mapping(uint256 => RoundInfo) public rounds;
-    
+
     /// @notice 用户地址到其拥有的彩票ID列表的映射
     mapping(address => uint256[]) public userTickets;
-    
-    /// @notice 新周期开始时触发
-    /// @param round 周期编号
-    /// @param startTime 开始时间戳
-    event RoundStarted(uint256 indexed round, uint256 startTime);
-    
-    /// @notice 周期结束时触发
-    /// @param round 周期编号
-    /// @param totalTickets 该周期总彩票数
-    /// @param prizePool 奖金池金额
-    event RoundEnded(uint256 indexed round, uint256 totalTickets, uint256 prizePool);
     
     /// @notice 购买彩票时触发
     /// @param buyer 购买者地址
     /// @param tokenId 彩票NFT的ID
-    /// @param round 购买彩票的周期
-    event TicketPurchased(address indexed buyer, uint256 indexed tokenId, uint256 round);
-    
+    event TicketPurchased(address indexed buyer, uint256 indexed tokenId);
+
     /// @notice 彩票被刮开时触发
     /// @param owner 彩票持有者地址
     /// @param tokenId 彩票ID
     /// @param prizeType 奖项类型
     /// @param prizeAmount 奖金金额
     event TicketScratched(address indexed owner, uint256 indexed tokenId, uint256 prizeType, uint256 prizeAmount);
-    
+
     /// @notice 奖金被领取时触发
     /// @param winner 中奖者地址
     /// @param tokenId 中奖彩票ID
@@ -127,21 +94,12 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
     constructor(address _owner, address _pledgedLotteryContract) ERC721("LotteryTicket", "LOTTERY") Ownable(_owner) {
         require(_pledgedLotteryContract != address(0), "Invalid PledgedLottery address");
         pledgedLotteryContract = _pledgedLotteryContract;
-        currentRound = 1;
-        roundStartTime = block.timestamp;
-        
-        emit RoundStarted(currentRound, roundStartTime);
     }
     
-    /// @notice 限制只能在活跃周期内执行的操作
-    modifier onlyActiveRound() {
-        require(block.timestamp < roundStartTime + ROUND_DURATION, unicode"当前周期已结束");
-        _;
-    }
     
     /// @notice 购买彩票NFT
-    /// @dev 需要支付精确的彩票价格，只能在活跃周期内购买
-    function buyTicket() external payable onlyActiveRound nonReentrant {
+    /// @dev 需要支付精确的彩票价格
+    function buyTicket() external payable nonReentrant {
 
         //可批量购买
         require(msg.value > 0, unicode"请至少支付0.01 ETH");
@@ -159,39 +117,35 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
                 block.timestamp,
                 block.prevrandao,
                 msg.sender,
-                tokenId,
-                currentRound
+                tokenId
             ));
-            
+
             // 铸造NFT彩票给购买者
             _mint(msg.sender, tokenId);
-            
+
             // 创建彩票信息
             tickets[tokenId] = TicketInfo({
-                round: currentRound,
                 isScratched: false,
                 prizeType: 0,
                 prizeAmount: 0,
                 isPrizeClaimed: false,
                 randomSeed: randomSeed
             });
-            
+
             userTickets[msg.sender].push(tokenId);
-            
-            emit TicketPurchased(msg.sender, tokenId, currentRound);
+
+            emit TicketPurchased(msg.sender, tokenId);
         }
-            
-        // 更新周期统计信息
-        RoundInfo storage round = rounds[currentRound];
-        round.totalTickets += ticketCount;
-        round.totalSales += msg.value;
+
+        // 更新系统统计信息
+        totalSales += msg.value;
 
     }
     
     /// @notice 代理购买彩票NFT（仅限PledgedLottery合约调用）
     /// @param buyer 实际购买者地址
     /// @dev 允许PledgedLottery合约代表用户购买彩票
-    function buyTicketFor(address buyer) external payable onlyActiveRound nonReentrant {
+    function buyTicketFor(address buyer) external payable nonReentrant {
         //可批量购买
         require(msg.value > 0, unicode"请至少支付0.01 ETH");
         require(msg.value % TICKET_PRICE == 0, unicode"彩票价格必须是0.01 ETH的整数倍");
@@ -210,33 +164,29 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
                 block.timestamp,
                 block.prevrandao,
                 buyer,
-                tokenId,
-                currentRound
+                tokenId
             ));
-            
+
             // 铸造NFT彩票给购买者
             _mint(buyer, tokenId);
-            
+
             // 创建彩票信息
             tickets[tokenId] = TicketInfo({
-                round: currentRound,
                 isScratched: false,
                 prizeType: 0,
                 prizeAmount: 0,
                 isPrizeClaimed: false,
                 randomSeed: randomSeed
             });
-            
+
             userTickets[buyer].push(tokenId);
-            
-            emit TicketPurchased(buyer, tokenId, currentRound);
+
+            emit TicketPurchased(buyer, tokenId);
         }
-        
-        // 更新周期统计信息
-        RoundInfo storage round = rounds[currentRound];
-        round.totalTickets += ticketCount;
-        round.totalSales += msg.value;
-        
+
+        // 更新系统统计信息
+        totalSales += msg.value;
+
     }
     
     /// @notice 刮开彩票查看中奖结果（刮刮乐机制）
@@ -252,9 +202,8 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
         // 基于随机种子计算中奖结果
         uint256 randomValue = uint256(ticket.randomSeed) % 10000;
         
-        // 计算奖金池（当前周期销售额的100%用作奖金，无平台手续费）
-        RoundInfo storage round = rounds[ticket.round];
-        uint256 prizePool = round.totalSales;
+        // 计算奖金池（系统总销售额的100%用作奖金，无平台手续费）
+        uint256 prizePool = totalSales;
         
         // 根据概率确定奖项类型和奖金
         if (randomValue < SUPER_PRIZE_RATE) {
@@ -297,9 +246,8 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
         // 基于随机种子计算中奖结果
         uint256 randomValue = uint256(ticket.randomSeed) % 10000;
         
-        // 计算奖金池（当前周期销售额的100%用作奖金，无平台手续费）
-        RoundInfo storage round = rounds[ticket.round];
-        uint256 prizePool = round.totalSales;
+        // 计算奖金池（系统总销售额的100%用作奖金，无平台手续费）
+        uint256 prizePool = totalSales;
         
         // 根据概率确定奖项类型和奖金
         if (randomValue < SUPER_PRIZE_RATE) {
@@ -362,8 +310,7 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
         ticket.isPrizeClaimed = true;
         
         // 更新已发放奖金统计
-        RoundInfo storage round = rounds[ticket.round];
-        round.totalPaidPrizes += ticket.prizeAmount;
+        totalPaidPrizes += ticket.prizeAmount;
         
         // 转账奖金给中奖者
         (bool success, ) = payable(msg.sender).call{value: ticket.prizeAmount}("");
@@ -388,8 +335,7 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
         ticket.isPrizeClaimed = true;
         
         // 更新已发放奖金统计
-        RoundInfo storage round = rounds[ticket.round];
-        round.totalPaidPrizes += ticket.prizeAmount;
+        totalPaidPrizes += ticket.prizeAmount;
         
         // 转账奖金给中奖者
         (bool success, ) = payable(claimer).call{value: ticket.prizeAmount}("");
@@ -398,25 +344,6 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
         emit PrizeClaimed(claimer, tokenId, ticket.prizeAmount);
     }
     
-    /// @notice 结束当前周期并开始新周期
-    /// @dev 只有合约所有者或PledgedLottery合约可以调用，必须在周期结束后才能执行
-    function endCurrentRound() external onlyOwnerOrPledgedLottery {
-        require(block.timestamp >= roundStartTime + ROUND_DURATION, unicode"当前周期尚未结束");
-        require(!rounds[currentRound].isEnded, unicode"当前周期已经结束");
-        
-        // 设置当前周期的奖金池
-        RoundInfo storage round = rounds[currentRound];
-        round.prizePool = round.totalSales;
-        round.isEnded = true;
-        
-        emit RoundEnded(currentRound, round.totalTickets, round.prizePool);
-        
-        // 开始新周期
-        currentRound++;
-        roundStartTime = block.timestamp;
-        
-        emit RoundStarted(currentRound, roundStartTime);
-    }
     
     // ========== 查询函数 ==========
     
@@ -434,37 +361,8 @@ contract LotteryToken is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard {
         return tickets[tokenId];
     }
     
-    /// @notice 查询指定周期的基本信息
-    /// @param round 周期编号
-    /// @return 周期的完整信息结构体
-    function getRoundInfo(uint256 round) external view returns (RoundInfo memory) {
-        return rounds[round];
-    }
     
-    /// @notice 查询当前周期的剩余时间
-    /// @return 当前周期的剩余秒数，如果已结束则返回0
-    function getCurrentRoundTimeLeft() external view returns (uint256) {
-        uint256 endTime = roundStartTime + ROUND_DURATION;
-        if (block.timestamp >= endTime) return 0;
-        return endTime - block.timestamp;
-    }
     
-    /// @notice 查询用户在指定周期购买的彩票数量
-    /// @param user 用户地址
-    /// @param round 周期编号
-    /// @return 用户在该周期购买的彩票数量
-    function getUserTicketCountInRound(address user, uint256 round) external view returns (uint256) {
-        uint256[] memory userTicketIds = userTickets[user];
-        uint256 count = 0;
-        
-        for (uint256 i = 0; i < userTicketIds.length; i++) {
-            if (tickets[userTicketIds[i]].round == round) {
-                count++;
-            }
-        }
-        
-        return count;
-    }
     
     /// @notice 查询用户的中奖彩票
     /// @param user 用户地址

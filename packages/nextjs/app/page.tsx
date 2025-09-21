@@ -1,15 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import type { NextPage } from "next";
 import { useAccount } from "wagmi";
 import { GiftIcon, PresentationChartLineIcon } from "@heroicons/react/24/outline";
-import { Address } from "~~/components/scaffold-eth";
 import { CycleInfo } from "~~/components/pledged-lottery/CycleInfo";
 import { LotterySection } from "~~/components/pledged-lottery/LotterySection";
 import { RewardsSection } from "~~/components/pledged-lottery/RewardsSection";
-import { StakingSection } from "~~/components/pledged-lottery/StakingSection";
-// import { Address } from "~~/components/scaffold-eth";
+import { Address } from "~~/components/scaffold-eth";
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
@@ -32,9 +29,6 @@ const Home: NextPage = () => {
 
           {/* Cycle Information */}
           <CycleInfo />
-
-          {/* Admin Panel - Only visible to admin */}
-          {/* <AdminPanel /> */}
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
@@ -71,36 +65,16 @@ const Home: NextPage = () => {
               <div className="card-body text-center">
                 <GiftIcon className="h-12 w-12 text-secondary mx-auto mb-4" />
                 <h3 className="text-lg font-bold text-secondary">NFT彩票系统</h3>
-                <p className="text-sm opacity-80">
-                  购买NFT彩票，刮刮乐开奖，50%综合中奖率，四级奖励等你来
-                </p>
+                <p className="text-sm opacity-80">购买NFT彩票，刮刮乐开奖，25%综合中奖率，四级奖励等你来</p>
               </div>
             </div>
 
             <div className="card bg-gradient-to-br from-accent/10 to-accent/20 border border-accent/20">
               <div className="card-body text-center">
                 <PresentationChartLineIcon className="h-12 w-12 text-accent mx-auto mb-4" />
-                <h3 className="text-lg font-bold text-accent">7天周期</h3>
+                <h3 className="text-lg font-bold text-accent">实时彩票</h3>
                 <p className="text-sm opacity-80">
-                  每个彩票周期7天，自动开奖，无平台手续费，100%销售额用作奖金池
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Debug Link */}
-          <div className="flex justify-center mt-12">
-            <div className="card bg-base-200/50 border border-base-300">
-              <div className="card-body py-4 px-6">
-                <p className="text-center text-sm">
-                  开发者工具:{" "}
-                  <Link href="/debug" className="link link-primary">
-                    调试合约
-                  </Link>{" "}
-                  |{" "}
-                  <Link href="/blockexplorer" className="link link-primary">
-                    区块浏览器
-                  </Link>
+                  持续运行的彩票系统，随时购买随时开奖，无平台手续费，100%销售额用作奖金池
                 </p>
               </div>
             </div>

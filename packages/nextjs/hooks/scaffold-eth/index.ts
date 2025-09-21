@@ -7,7 +7,6 @@ export * from "./useInitializeNativeCurrencyPrice";
 export * from "./useNetworkColor";
 export * from "./useOutsideClick";
 export * from "./useScaffoldContract";
-export * from "./useScaffoldEventHistory";
 export * from "./useScaffoldReadContract";
 export * from "./useScaffoldWatchContractEvent";
 export * from "./useScaffoldWriteContract";

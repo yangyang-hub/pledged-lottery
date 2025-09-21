@@ -9,7 +9,15 @@
       "Bash(find:*)",
       "Bash(ls:*)",
       "Bash(forge script:*)",
-      "Bash(forge clean)"
+      "Bash(forge clean)",
+      "Bash(tree:*)",
+      "Bash(npm run build:*)",
+      "Bash(cast call:*)",
+      "Bash(cast send:*)",
+      "Bash(curl:*)",
+      "Bash(yarn next:build:*)",
+      "Bash(yarn next:lint:*)",
+      "Bash(yarn start)"
     ],
     "deny": []
   }

@@ -46,9 +46,11 @@ export function useDeployedContractInfo<TContractName extends ContractName>(
   }, [configOrName]);
   const { contractName, chainId } = finalConfig;
   const selectedNetwork = useSelectedNetwork(chainId);
-  const deployedContract = contracts?.[selectedNetwork.id]?.[contractName as ContractName] as Contract<TContractName>;
+  const networkId = Number(selectedNetwork.id);
+  const contractKey = String(contractName) as ContractName;
+  const deployedContract = (contracts as any)?.[networkId]?.[contractKey] as Contract<TContractName>;
   const [status, setStatus] = useState<ContractCodeStatus>(ContractCodeStatus.LOADING);
-  const publicClient = usePublicClient({ chainId: selectedNetwork.id });
+  const publicClient = usePublicClient({ chainId: networkId });
 
   useEffect(() => {
     const checkContractDeployment = async () => {

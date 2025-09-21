@@ -286,8 +286,6 @@ contract DeployYourContract is ScaffoldETHDeploy {
         console.log("Contract ownership verified");
         
         // 初始状态验证
-        require(pledgedLottery.currentRound() == 1, "Initial round incorrect");
-        require(lotteryToken.currentRound() == 1, "LotteryToken initial round incorrect");
         console.log("Initial state verified");
         
         // 合约关联验证
@@ -297,7 +295,6 @@ contract DeployYourContract is ScaffoldETHDeploy {
         
         // 参数验证
         require(lotteryToken.TICKET_PRICE() > 0, "Ticket price not set");
-        require(lotteryToken.ROUND_DURATION() > 0, "Round duration not set");
         console.log("Contract parameters verified");
         
         // 发出验证事件
