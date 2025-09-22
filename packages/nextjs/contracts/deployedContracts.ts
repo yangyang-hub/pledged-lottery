@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   10143: {
     PledgedLottery: {
-      address: "0xc2af8a364bfb3e41bd23e397ab030f71e664e98f",
+      address: "0xa6c3fde87c325673d840073949d5ca1b5e37c22c",
       abi: [
         {
           type: "constructor",
@@ -67,6 +67,40 @@ const deployedContracts = {
           inputs: [],
           outputs: [],
           stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "getBatchTicketInfo",
+          inputs: [
+            {
+              name: "tokenIds",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+          ],
+          outputs: [
+            {
+              name: "isScratched",
+              type: "bool[]",
+              internalType: "bool[]",
+            },
+            {
+              name: "prizeTypes",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+            {
+              name: "prizeAmounts",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+            {
+              name: "isPrizeClaimed",
+              type: "bool[]",
+              internalType: "bool[]",
+            },
+          ],
+          stateMutability: "view",
         },
         {
           type: "function",
@@ -169,6 +203,35 @@ const deployedContracts = {
           outputs: [
             {
               name: "",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getUserTicketsWithStates",
+          inputs: [
+            {
+              name: "user",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "allTickets",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+            {
+              name: "ticketStates",
+              type: "uint8[]",
+              internalType: "uint8[]",
+            },
+            {
+              name: "prizeAmounts",
               type: "uint256[]",
               internalType: "uint256[]",
             },
@@ -464,12 +527,12 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 38554553,
+      deployedOnBlock: 38717450,
     },
   },
   31337: {
     PledgedLottery: {
-      address: "0x700b6a60ce7eaaea56f065753d8dcb9653dbad35",
+      address: "0xa15bb66138824a1c7167f5e85b957d04dd34e468",
       abi: [
         {
           type: "constructor",
@@ -529,6 +592,40 @@ const deployedContracts = {
           inputs: [],
           outputs: [],
           stateMutability: "nonpayable",
+        },
+        {
+          type: "function",
+          name: "getBatchTicketInfo",
+          inputs: [
+            {
+              name: "tokenIds",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+          ],
+          outputs: [
+            {
+              name: "isScratched",
+              type: "bool[]",
+              internalType: "bool[]",
+            },
+            {
+              name: "prizeTypes",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+            {
+              name: "prizeAmounts",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+            {
+              name: "isPrizeClaimed",
+              type: "bool[]",
+              internalType: "bool[]",
+            },
+          ],
+          stateMutability: "view",
         },
         {
           type: "function",
@@ -631,6 +728,35 @@ const deployedContracts = {
           outputs: [
             {
               name: "",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+          ],
+          stateMutability: "view",
+        },
+        {
+          type: "function",
+          name: "getUserTicketsWithStates",
+          inputs: [
+            {
+              name: "user",
+              type: "address",
+              internalType: "address",
+            },
+          ],
+          outputs: [
+            {
+              name: "allTickets",
+              type: "uint256[]",
+              internalType: "uint256[]",
+            },
+            {
+              name: "ticketStates",
+              type: "uint8[]",
+              internalType: "uint8[]",
+            },
+            {
+              name: "prizeAmounts",
               type: "uint256[]",
               internalType: "uint256[]",
             },
@@ -926,7 +1052,7 @@ const deployedContracts = {
         },
       ],
       inheritedFunctions: {},
-      deployedOnBlock: 1,
+      deployedOnBlock: 2,
     },
   },
 } as const;

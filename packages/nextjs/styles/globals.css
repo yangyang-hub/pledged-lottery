@@ -121,3 +121,105 @@
 .link:hover {
   opacity: 80%;
 }
+
+/* 彻底修复按钮点击后闪动问题 - 简化版无loading */
+@layer components {
+  /* 强制覆盖所有按钮样式，禁用一切可能导致闪动的效果 */
+  .btn,
+  .btn:hover,
+  .btn:focus,
+  .btn:focus-visible,
+  .btn:active,
+  .btn.focus,
+  .btn.active {
+    outline: none !important;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06) !important;
+    transform: none !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, opacity 0.15s ease !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    animation: none !important;
+  }
+
+  /* 确保disabled状态稳定 */
+  .btn:disabled,
+  .btn.disabled {
+    transform: none !important;
+    pointer-events: none !important;
+    animation: none !important;
+    opacity: 0.6 !important;
+  }
+
+  /* 完全禁用按钮的伪元素动画 */
+  .btn::before,
+  .btn::after {
+    animation: none !important;
+    transition: none !important;
+    display: none !important;
+  }
+
+  /* 禁用所有可能的闪动来源 */
+  .btn * {
+    transition: inherit !important;
+    animation: none !important;
+  }
+
+  /* 特别处理ghost按钮 */
+  .btn.btn-ghost,
+  .btn.btn-ghost:hover,
+  .btn.btn-ghost:focus,
+  .btn.btn-ghost:active {
+    box-shadow: none !important;
+  }
+
+  /* 完全禁用按钮的伪类可能导致的样式变化 */
+  .btn:focus-within,
+  .btn:target,
+  .btn:visited {
+    transform: none !important;
+    animation: none !important;
+  }
+
+  /* 禁用任何可能的DaisyUI主题动画 */
+  [data-theme] .btn,
+  [data-theme="light"] .btn,
+  [data-theme="dark"] .btn {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  /* 彻底禁用按钮状态切换时的闪动 */
+  .btn {
+    will-change: auto !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+  }
+
+  /* 确保所有按钮变体都没有闪动 */
+  .btn-primary,
+  .btn-secondary,
+  .btn-success,
+  .btn-warning,
+  .btn-error,
+  .btn-ghost,
+  .btn-outline,
+  .btn-sm,
+  .btn-lg,
+  .btn-xs {
+    animation: none !important;
+    transform: none !important;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease !important;
+  }
+
+  /* 修复按钮状态切换时的视觉稳定性 */
+  .btn:hover,
+  .btn:focus,
+  .btn:active {
+    transform: none !important;
+    animation: none !important;
+  }
+}

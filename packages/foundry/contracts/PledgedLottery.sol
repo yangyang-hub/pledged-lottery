@@ -166,6 +166,85 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
         return lotteryToken.getUserTickets(user);
     }
     
+    /// @notice 批量查询彩票信息
+    /// @param tokenIds 彩票ID数组
+    /// @return isScratched 是否已刮开状态数组
+    /// @return prizeTypes 奖项类型数组
+    /// @return prizeAmounts 奖金金额数组
+    /// @return isPrizeClaimed 奖金是否已领取状态数组
+    /// @dev 批量获取多张彩票的状态信息，用于前端一次性加载
+    function getBatchTicketInfo(uint256[] calldata tokenIds) external view returns (
+        bool[] memory isScratched,
+        uint256[] memory prizeTypes,
+        uint256[] memory prizeAmounts,
+        bool[] memory isPrizeClaimed
+    ) {
+        require(tokenIds.length > 0, unicode"彩票ID数组不能为空");
+        require(tokenIds.length <= 100, unicode"一次最多查询100张彩票"); // 防止gas超限
+
+        uint256 length = tokenIds.length;
+        isScratched = new bool[](length);
+        prizeTypes = new uint256[](length);
+        prizeAmounts = new uint256[](length);
+        isPrizeClaimed = new bool[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            try lotteryToken.getTicketInfo(tokenIds[i]) returns (
+                LotteryToken.TicketInfo memory ticketInfo
+            ) {
+                isScratched[i] = ticketInfo.isScratched;
+                prizeTypes[i] = ticketInfo.prizeType;
+                prizeAmounts[i] = ticketInfo.prizeAmount;
+                isPrizeClaimed[i] = ticketInfo.isPrizeClaimed;
+            } catch {
+                // 如果彩票不存在，返回默认值
+                isScratched[i] = false;
+                prizeTypes[i] = 0;
+                prizeAmounts[i] = 0;
+                isPrizeClaimed[i] = false;
+            }
+        }
+    }
+
+    /// @notice 批量查询用户彩票信息（包含状态分类）
+    /// @param user 用户地址
+    /// @return allTickets 用户所有彩票ID
+    /// @return ticketStates 对应的彩票状态数组 (0=未刮开, 1=未中奖, 2=待领奖, 3=已领奖)
+    /// @return prizeAmounts 对应的奖金金额数组
+    function getUserTicketsWithStates(address user) external view returns (
+        uint256[] memory allTickets,
+        uint8[] memory ticketStates,
+        uint256[] memory prizeAmounts
+    ) {
+        allTickets = lotteryToken.getUserTickets(user);
+        uint256 length = allTickets.length;
+
+        ticketStates = new uint8[](length);
+        prizeAmounts = new uint256[](length);
+
+        for (uint256 i = 0; i < length; i++) {
+            try lotteryToken.getTicketInfo(allTickets[i]) returns (
+                LotteryToken.TicketInfo memory ticketInfo
+            ) {
+                prizeAmounts[i] = ticketInfo.prizeAmount;
+
+                if (!ticketInfo.isScratched) {
+                    ticketStates[i] = 0; // 未刮开
+                } else if (ticketInfo.prizeType == 0) {
+                    ticketStates[i] = 1; // 未中奖
+                } else if (!ticketInfo.isPrizeClaimed) {
+                    ticketStates[i] = 2; // 待领奖
+                } else {
+                    ticketStates[i] = 3; // 已领奖
+                }
+            } catch {
+                // 如果彩票不存在，标记为未知状态
+                ticketStates[i] = 0;
+                prizeAmounts[i] = 0;
+            }
+        }
+    }
+
     /// @notice 查询指定彩票的详细信息
     /// @param tokenId 彩票NFT ID
     /// @return isScratched 是否已刮开
@@ -189,9 +268,9 @@ contract PledgedLottery is Ownable, ReentrancyGuard, Pausable {
             ticketInfo.randomSeed
         );
     }
-    
-    
-    
+
+
+
     /// @notice 查询用户的中奖彩票信息
     /// @param user 用户地址
     /// @return winningTickets 中奖彩票ID数组

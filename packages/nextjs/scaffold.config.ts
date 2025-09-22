@@ -13,7 +13,7 @@ export type ScaffoldConfig = BaseConfig;
 // 内置默认配置
 const DEFAULT_ALCHEMY_API_KEY = "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
 const DEFAULT_WALLET_CONNECT_PROJECT_ID = "3a8170812b534d0ff9d794f19a901d64";
-const DEFAULT_POLLING_INTERVAL = 30000;
+const DEFAULT_POLLING_INTERVAL = 300000; // 增加到300秒(5分钟)避免频繁RPC调用
 
 // 导出默认值供其他模块使用
 export { DEFAULT_ALCHEMY_API_KEY };
@@ -31,7 +31,7 @@ export const customFoundry = {
   },
 } as const;
 
-// Monad测试网配置
+// Monad测试网配置 - 移除有问题的RPC节点
 export const monadTestnet = {
   id: 10143,
   name: "Monad Testnet",
@@ -42,8 +42,16 @@ export const monadTestnet = {
     symbol: "MON",
   },
   rpcUrls: {
-    public: { http: ["https://testnet-rpc.monad.xyz"] },
-    default: { http: ["https://testnet-rpc.monad.xyz"] },
+    public: {
+      http: [
+        "https://testnet-rpc.monad.xyz", // 只保留官方备用端点
+      ],
+    },
+    default: {
+      http: [
+        "https://testnet-rpc.monad.xyz", // 只保留官方备用端点
+      ],
+    },
   },
   blockExplorers: {
     default: { name: "Monad Explorer", url: "https://explorer-testnet.monad.xyz" },

@@ -7,9 +7,15 @@ import { CycleInfo } from "~~/components/pledged-lottery/CycleInfo";
 import { LotterySection } from "~~/components/pledged-lottery/LotterySection";
 import { RewardsSection } from "~~/components/pledged-lottery/RewardsSection";
 import { Address } from "~~/components/scaffold-eth";
+import { useBatchLoad } from "~~/hooks/useDelayedLoad";
 
 const Home: NextPage = () => {
   const { address: connectedAddress } = useAccount();
+
+  // 分批加载策略，避免同时发起大量RPC调用
+  const cycleInfoReady = useBatchLoad(0, 500);     // 立即加载基础信息
+  const lotteryReady = useBatchLoad(1, 500);       // 500ms后加载彩票功能
+  const rewardsReady = useBatchLoad(2, 500);       // 1000ms后加载奖励功能
 
   return (
     <>
@@ -27,33 +33,47 @@ const Home: NextPage = () => {
             <Address address={connectedAddress} />
           </div>
 
-          {/* Cycle Information */}
-          <CycleInfo />
+          {/* Cycle Information - 立即加载 */}
+          {cycleInfoReady && <CycleInfo />}
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
-            {/* Lottery Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8 lg:items-stretch">
+            {/* Lottery Section - 延迟加载 */}
             <div className="lg:col-span-1">
-              <div className="card bg-base-100 shadow-xl">
-                <div className="card-body">
+              <div className="card bg-base-100 shadow-xl h-full">
+                <div className="card-body h-full flex flex-col">
                   <div className="flex items-center gap-2 mb-4">
                     <GiftIcon className="h-6 w-6 text-secondary" />
                     <h2 className="card-title text-secondary">彩票购买</h2>
                   </div>
-                  <LotterySection />
+                  {lotteryReady ? (
+                    <LotterySection />
+                  ) : (
+                    <div className="flex justify-center items-center h-32">
+                      <span className="loading loading-spinner loading-md"></span>
+                      <span className="ml-2">加载中...</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
 
-            {/* Rewards Section */}
+            {/* Rewards Section - 更长延迟加载 */}
             <div className="lg:col-span-1">
-              <div className="card bg-base-100 shadow-xl">
-                <div className="card-body">
+              <div className="card bg-base-100 shadow-xl h-full">
+                <div className="card-body h-full flex flex-col">
                   <div className="flex items-center gap-2 mb-4">
                     <PresentationChartLineIcon className="h-6 w-6 text-accent" />
                     <h2 className="card-title text-accent">彩票管理</h2>
                   </div>
-                  <RewardsSection />
+                  {rewardsReady ? (
+                    <RewardsSection />
+                  ) : (
+                    <div className="flex justify-center items-center h-32">
+                      <span className="loading loading-spinner loading-md"></span>
+                      <span className="ml-2">加载中...</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
